@@ -93,7 +93,7 @@ export default function PaginaCidades() {
           <h2>{cidadeEditando ? 'Editar cidade' : 'Nova cidade'}</h2>
           <label>
             Nome *
-            <input name="nome" value={form.nome} onChange={handleChange} required />
+            <input name="nome" value={form.nome} onChange={handleChange} maxLength={100} required />
           </label>
           <label>
             Estado (UF) *

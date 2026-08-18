@@ -1,10 +1,12 @@
 const express = require('express');
 const pool = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
+const { somenteDigitos, nomeValido, validarCamposAdotante } = require('../utils/validadores');
 
 const router = express.Router();
 
 const STATUS_VALIDOS = ['disponivel', 'adotado'];
+const IDADE_MAXIMA_ANOS = 30;
 
 const SELECT_ANIMAIS = `
   SELECT
@@ -31,7 +33,9 @@ function dataNascimentoValida(data_nascimento) {
   if (Number.isNaN(data.getTime())) {
     return false;
   }
-  return data <= new Date();
+  const dataMinima = new Date();
+  dataMinima.setFullYear(dataMinima.getFullYear() - IDADE_MAXIMA_ANOS);
+  return data <= new Date() && data >= dataMinima;
 }
 
 async function cidadeExiste(cidade_id) {
@@ -97,8 +101,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // POST /animais - cria um animal
 router.post('/', asyncHandler(async (req, res) => {
   const { nome, especie_id, raca_id, data_nascimento, cidade_id } = req.body;
-  if (!nome || !especie_id) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: nome, especie_id' });
+  if (!nomeValido(nome, 100) || !especie_id) {
+    return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), especie_id' });
   }
   if (!(await especieExiste(especie_id))) {
     return res.status(404).json({ erro: 'Espécie não encontrada' });
@@ -108,7 +112,9 @@ router.post('/', asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: erroRaca });
   }
   if (!dataNascimentoValida(data_nascimento)) {
-    return res.status(400).json({ erro: 'data_nascimento inválida (não pode ser futura)' });
+    return res
+      .status(400)
+      .json({ erro: `data_nascimento inválida (não pode ser futura nem anterior a ${IDADE_MAXIMA_ANOS} anos atrás)` });
   }
   if (cidade_id && !(await cidadeExiste(cidade_id))) {
     return res.status(404).json({ erro: 'Cidade não encontrada' });
@@ -116,7 +122,7 @@ router.post('/', asyncHandler(async (req, res) => {
 
   const [result] = await pool.query(
     'INSERT INTO animais (nome, especie_id, raca_id, data_nascimento, cidade_id) VALUES (?, ?, ?, ?, ?)',
-    [nome, especie_id, raca_id || null, data_nascimento || null, cidade_id || null]
+    [nome.trim(), especie_id, raca_id || null, data_nascimento || null, cidade_id || null]
   );
   const [rows] = await pool.query(`${SELECT_ANIMAIS} WHERE a.id = ?`, [result.insertId]);
   res.status(201).json(rows[0]);
@@ -125,8 +131,8 @@ router.post('/', asyncHandler(async (req, res) => {
 // PUT /animais/:id - atualiza um animal
 router.put('/:id', asyncHandler(async (req, res) => {
   const { nome, especie_id, raca_id, data_nascimento, cidade_id } = req.body;
-  if (!nome || !especie_id) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: nome, especie_id' });
+  if (!nomeValido(nome, 100) || !especie_id) {
+    return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), especie_id' });
   }
   if (!(await especieExiste(especie_id))) {
     return res.status(404).json({ erro: 'Espécie não encontrada' });
@@ -136,7 +142,9 @@ router.put('/:id', asyncHandler(async (req, res) => {
     return res.status(400).json({ erro: erroRaca });
   }
   if (!dataNascimentoValida(data_nascimento)) {
-    return res.status(400).json({ erro: 'data_nascimento inválida (não pode ser futura)' });
+    return res
+      .status(400)
+      .json({ erro: `data_nascimento inválida (não pode ser futura nem anterior a ${IDADE_MAXIMA_ANOS} anos atrás)` });
   }
   if (cidade_id && !(await cidadeExiste(cidade_id))) {
     return res.status(404).json({ erro: 'Cidade não encontrada' });
@@ -149,7 +157,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
   await pool.query(
     'UPDATE animais SET nome = ?, especie_id = ?, raca_id = ?, data_nascimento = ?, cidade_id = ? WHERE id = ?',
-    [nome, especie_id, raca_id || null, data_nascimento || null, cidade_id || null, req.params.id]
+    [nome.trim(), especie_id, raca_id || null, data_nascimento || null, cidade_id || null, req.params.id]
   );
   const [rows] = await pool.query(`${SELECT_ANIMAIS} WHERE a.id = ?`, [req.params.id]);
   res.json(rows[0]);
@@ -165,9 +173,9 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 }));
 
 // POST /animais/:id/adotar - marca o animal como adotado
-// Recebe adotante_id (adotante já existente) OU nome+contato (+ cidade_id opcional) para criar um adotante novo
+// Recebe adotante_id (adotante já existente) OU nome+cpf (+telefone/email/cidade_id opcionais) para criar um adotante novo
 router.post('/:id/adotar', asyncHandler(async (req, res) => {
-  const { adotante_id, nome, contato, cidade_id } = req.body;
+  const { adotante_id, nome, cpf, telefone, email, cidade_id } = req.body;
 
   const [animalRows] = await pool.query('SELECT * FROM animais WHERE id = ?', [req.params.id]);
   if (animalRows.length === 0) {
@@ -180,19 +188,25 @@ router.post('/:id/adotar', asyncHandler(async (req, res) => {
   let adotanteId = adotante_id;
 
   if (!adotanteId) {
-    if (!nome || !contato) {
-      return res.status(400).json({
-        erro: 'Informe adotante_id de um adotante existente, ou nome e contato para cadastrar um novo',
-      });
+    const erroValidacao = validarCamposAdotante({ nome, cpf, telefone, email });
+    if (erroValidacao) {
+      return res.status(400).json({ erro: erroValidacao });
     }
     if (cidade_id && !(await cidadeExiste(cidade_id))) {
       return res.status(404).json({ erro: 'Cidade não encontrada' });
     }
-    const [result] = await pool.query(
-      'INSERT INTO adotantes (nome, contato, cidade_id) VALUES (?, ?, ?)',
-      [nome, contato, cidade_id || null]
-    );
-    adotanteId = result.insertId;
+    try {
+      const [result] = await pool.query(
+        'INSERT INTO adotantes (nome, cpf, telefone, email, cidade_id) VALUES (?, ?, ?, ?, ?)',
+        [nome.trim(), somenteDigitos(cpf), telefone ? somenteDigitos(telefone) : null, email || null, cidade_id || null]
+      );
+      adotanteId = result.insertId;
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ erro: 'CPF já cadastrado' });
+      }
+      throw err;
+    }
   } else {
     const [adotanteRows] = await pool.query('SELECT id FROM adotantes WHERE id = ?', [adotanteId]);
     if (adotanteRows.length === 0) {

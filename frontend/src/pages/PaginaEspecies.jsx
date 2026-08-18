@@ -92,7 +92,7 @@ export default function PaginaEspecies() {
           <h2>{especieEditando ? 'Editar espécie' : 'Nova espécie'}</h2>
           <label>
             Nome *
-            <input name="nome" value={form.nome} onChange={handleChange} required />
+            <input name="nome" value={form.nome} onChange={handleChange} maxLength={50} required />
           </label>
           <div className="form-actions">
             <button type="submit" className="btn-primario">

@@ -22,6 +22,12 @@ Verifique se o container está saudável:
 docker ps
 ```
 
+**Opcional:** popular o banco com dados de exemplo (8 animais, 8 adotantes, cidades/raças extras):
+
+```bash
+docker exec -i adocao_mariadb mariadb -u adocao_user -padocao_pass adocao_animais < db/seed.sql
+```
+
 ### 2. Rodar o backend
 
 ```bash
@@ -56,36 +62,51 @@ Frontend sobe em `http://localhost:5173`.
 | GET    | `/adotantes`               | Lista adotantes                        |
 | GET    | `/adotantes/:id`            | Detalhe de um adotante                 |
 | POST   | `/adotantes`                | Cria um adotante                       |
+| PUT    | `/adotantes/:id`             | Atualiza um adotante                   |
+| DELETE | `/adotantes/:id`             | Remove um adotante                     |
 | GET    | `/cidades`                  | Lista cidades                          |
 | POST   | `/cidades`                  | Cria uma cidade                        |
+| PUT    | `/cidades/:id`               | Atualiza uma cidade                    |
+| DELETE | `/cidades/:id`               | Remove uma cidade                      |
 | GET    | `/especies`                 | Lista espécies                         |
 | POST   | `/especies`                 | Cria uma espécie                       |
+| PUT    | `/especies/:id`              | Atualiza uma espécie                   |
+| DELETE | `/especies/:id`              | Remove uma espécie                     |
 | GET    | `/racas`                    | Lista raças (filtro `?especie_id=`)    |
 | POST   | `/racas`                    | Cria uma raça vinculada a uma espécie  |
+| PUT    | `/racas/:id`                 | Atualiza uma raça                      |
+| DELETE | `/racas/:id`                 | Remove uma raça                        |
 
 ### Campos de `animais`
 
+- `nome`: obrigatório, máx. 100 caracteres
 - `especie_id`: obrigatório, referencia uma espécie cadastrada (FK)
 - `raca_id`: opcional, referencia uma raça cadastrada — precisa pertencer à `especie_id` informada (senão retorna 400)
-- `data_nascimento`: data (opcional, não pode ser futura). A API retorna também um campo `idade` calculado automaticamente a partir dela (em anos) — exibido na listagem do frontend.
+- `data_nascimento`: data (opcional). Não pode ser futura nem anterior a 30 anos atrás. A API retorna também um campo `idade` calculado automaticamente a partir dela (em anos).
 - `cidade_id`: opcional, referencia uma cidade cadastrada (FK com `ON DELETE SET NULL`)
 
 ### Campos de `adotantes`
 
+- `nome`: obrigatório, máx. 150 caracteres
+- `cpf`: obrigatório, único, validado com o algoritmo de dígito verificador (módulo 11) — retorna 400 se inválido, 409 se duplicado. Armazenado só com dígitos; a máscara `000.000.000-00` é aplicada no frontend.
+- `telefone`: opcional, precisa ter 10 ou 11 dígitos (DDD + número) se informado. Máscara `(00) 00000-0000` aplicada no frontend.
+- `email`: opcional, validado por formato (`usuario@dominio.com`)
 - `cidade_id`: opcional, mesma referência à tabela `cidades`
+- Exclusão bloqueada (409) se o adotante ainda tiver algum animal com status `adotado` vinculado
 
 ### Campos de `cidades`
 
-- `nome`: obrigatório
-- `estado`: sigla UF com 2 letras (normalizada para maiúsculo), obrigatório. Combinação `nome`+`estado` é única (retorna 409 se duplicada).
+- `nome`: obrigatório, máx. 100 caracteres
+- `estado`: sigla UF com 2 letras (normalizada para maiúsculo), obrigatório — selecionada em um dropdown com os 27 estados no frontend. Combinação `nome`+`estado` é única (retorna 409 se duplicada).
 
 ### Campos de `especies`
 
-- `nome`: obrigatório e único (retorna 409 se duplicado)
+- `nome`: obrigatório, máx. 50 caracteres, único (retorna 409 se duplicado)
+- Exclusão bloqueada (409) se houver animais ou raças vinculados
 
 ### Campos de `racas`
 
-- `nome`: obrigatório
+- `nome`: obrigatório, máx. 100 caracteres
 - `especie_id`: obrigatório, referencia uma espécie cadastrada. Combinação `nome`+`especie_id` é única (retorna 409 se duplicada).
 
 ## Resetar os dados

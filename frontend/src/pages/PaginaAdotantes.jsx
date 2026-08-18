@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { IconeEditar, IconeExcluir } from '../components/Icones';
+import { formatarCPF, formatarTelefone } from '../utils';
 
-const VAZIO = { nome: '', contato: '', cidade_id: '' };
+const VAZIO = { nome: '', cpf: '', telefone: '', email: '', cidade_id: '' };
 
 export default function PaginaAdotantes() {
   const [adotantes, setAdotantes] = useState([]);
@@ -38,6 +39,14 @@ export default function PaginaAdotantes() {
 
   function handleChange(e) {
     const { name, value } = e.target;
+    if (name === 'cpf') {
+      setForm((prev) => ({ ...prev, cpf: formatarCPF(value) }));
+      return;
+    }
+    if (name === 'telefone') {
+      setForm((prev) => ({ ...prev, telefone: formatarTelefone(value) }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -51,7 +60,9 @@ export default function PaginaAdotantes() {
     setAdotanteEditando(adotante);
     setForm({
       nome: adotante.nome,
-      contato: adotante.contato,
+      cpf: formatarCPF(adotante.cpf || ''),
+      telefone: adotante.telefone ? formatarTelefone(adotante.telefone) : '',
+      email: adotante.email || '',
       cidade_id: adotante.cidade_id || '',
     });
     setMostrarForm(true);
@@ -68,7 +79,9 @@ export default function PaginaAdotantes() {
       setErro('');
       const dados = {
         nome: form.nome,
-        contato: form.contato,
+        cpf: form.cpf,
+        telefone: form.telefone || null,
+        email: form.email || null,
         cidade_id: form.cidade_id || null,
       };
       if (adotanteEditando) {
@@ -112,11 +125,32 @@ export default function PaginaAdotantes() {
           <h2>{adotanteEditando ? 'Editar adotante' : 'Novo adotante'}</h2>
           <label>
             Nome *
-            <input name="nome" value={form.nome} onChange={handleChange} required />
+            <input name="nome" value={form.nome} onChange={handleChange} maxLength={150} required />
           </label>
           <label>
-            Contato *
-            <input name="contato" value={form.contato} onChange={handleChange} required />
+            CPF *
+            <input
+              name="cpf"
+              value={form.cpf}
+              onChange={handleChange}
+              placeholder="000.000.000-00"
+              maxLength={14}
+              required
+            />
+          </label>
+          <label>
+            Telefone
+            <input
+              name="telefone"
+              value={form.telefone}
+              onChange={handleChange}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+            />
+          </label>
+          <label>
+            E-mail
+            <input name="email" type="email" value={form.email} onChange={handleChange} maxLength={150} />
           </label>
           <label>
             Cidade
@@ -151,9 +185,10 @@ export default function PaginaAdotantes() {
               <thead>
                 <tr>
                   <th>Nome</th>
-                  <th>Contato</th>
+                  <th>CPF</th>
+                  <th>Telefone</th>
+                  <th>E-mail</th>
                   <th>Cidade</th>
-                  <th>Cadastrado em</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -161,9 +196,10 @@ export default function PaginaAdotantes() {
                 {adotantes.map((a) => (
                   <tr key={a.id}>
                     <td>{a.nome}</td>
-                    <td>{a.contato}</td>
+                    <td>{formatarCPF(a.cpf)}</td>
+                    <td>{a.telefone ? formatarTelefone(a.telefone) : '-'}</td>
+                    <td>{a.email || '-'}</td>
                     <td>{a.cidade_nome ? `${a.cidade_nome}/${a.cidade_estado}` : '-'}</td>
-                    <td>{new Date(a.criado_em).toLocaleDateString('pt-BR')}</td>
                     <td className="acoes">
                       <button
                         className="btn-icone"

@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { formatarCPF, formatarTelefone } from '../utils';
 
 export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onCancelar }) {
   const [adotanteId, setAdotanteId] = useState('');
   const [nome, setNome] = useState('');
-  const [contato, setContato] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [email, setEmail] = useState('');
   const [cidadeId, setCidadeId] = useState('');
 
   function handleSubmit(e) {
@@ -11,7 +14,7 @@ export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onC
     if (adotanteId) {
       onAdotar({ adotante_id: Number(adotanteId) });
     } else {
-      onAdotar({ nome, contato, cidade_id: cidadeId || null });
+      onAdotar({ nome, cpf, telefone: telefone || null, email: email || null, cidade_id: cidadeId || null });
     }
   }
 
@@ -25,7 +28,7 @@ export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onC
           <option value="">-- Cadastrar novo adotante --</option>
           {adotantes.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.nome} ({a.contato})
+              {a.nome} ({formatarCPF(a.cpf)})
             </option>
           ))}
         </select>
@@ -35,11 +38,30 @@ export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onC
         <>
           <label>
             Nome do adotante *
-            <input value={nome} onChange={(e) => setNome(e.target.value)} required />
+            <input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={150} required />
           </label>
           <label>
-            Contato (telefone/email) *
-            <input value={contato} onChange={(e) => setContato(e.target.value)} required />
+            CPF *
+            <input
+              value={cpf}
+              onChange={(e) => setCpf(formatarCPF(e.target.value))}
+              placeholder="000.000.000-00"
+              maxLength={14}
+              required
+            />
+          </label>
+          <label>
+            Telefone
+            <input
+              value={telefone}
+              onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+            />
+          </label>
+          <label>
+            E-mail
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150} />
           </label>
           <label>
             Cidade

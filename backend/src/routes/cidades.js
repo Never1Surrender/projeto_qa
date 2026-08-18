@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
+const { nomeValido } = require('../utils/validadores');
 
 const router = express.Router();
 
@@ -22,8 +23,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // POST /cidades - cria uma cidade
 router.post('/', asyncHandler(async (req, res) => {
   const { nome, estado } = req.body;
-  if (!nome || !estado) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: nome, estado' });
+  if (!nomeValido(nome, 100) || !estado) {
+    return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), estado' });
   }
   if (estado.length !== 2) {
     return res.status(400).json({ erro: 'estado deve ser a sigla UF com 2 letras' });
@@ -32,7 +33,7 @@ router.post('/', asyncHandler(async (req, res) => {
   try {
     const [result] = await pool.query(
       'INSERT INTO cidades (nome, estado) VALUES (?, ?)',
-      [nome, estado.toUpperCase()]
+      [nome.trim(), estado.toUpperCase()]
     );
     const [rows] = await pool.query('SELECT * FROM cidades WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
@@ -47,8 +48,8 @@ router.post('/', asyncHandler(async (req, res) => {
 // PUT /cidades/:id - atualiza uma cidade
 router.put('/:id', asyncHandler(async (req, res) => {
   const { nome, estado } = req.body;
-  if (!nome || !estado) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: nome, estado' });
+  if (!nomeValido(nome, 100) || !estado) {
+    return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), estado' });
   }
   if (estado.length !== 2) {
     return res.status(400).json({ erro: 'estado deve ser a sigla UF com 2 letras' });
@@ -61,7 +62,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
   try {
     await pool.query('UPDATE cidades SET nome = ?, estado = ? WHERE id = ?', [
-      nome,
+      nome.trim(),
       estado.toUpperCase(),
       req.params.id,
     ]);

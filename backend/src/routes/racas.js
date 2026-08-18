@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
+const { nomeValido } = require('../utils/validadores');
 
 const router = express.Router();
 
@@ -40,8 +41,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // POST /racas - cria uma raça vinculada a uma espécie
 router.post('/', asyncHandler(async (req, res) => {
   const { nome, especie_id } = req.body;
-  if (!nome || !especie_id) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: nome, especie_id' });
+  if (!nomeValido(nome, 100) || !especie_id) {
+    return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), especie_id' });
   }
   if (!(await especieExiste(especie_id))) {
     return res.status(404).json({ erro: 'Espécie não encontrada' });
@@ -50,7 +51,7 @@ router.post('/', asyncHandler(async (req, res) => {
   try {
     const [result] = await pool.query(
       'INSERT INTO racas (nome, especie_id) VALUES (?, ?)',
-      [nome, especie_id]
+      [nome.trim(), especie_id]
     );
     const [rows] = await pool.query(`${SELECT_RACAS} WHERE r.id = ?`, [result.insertId]);
     res.status(201).json(rows[0]);
@@ -65,8 +66,8 @@ router.post('/', asyncHandler(async (req, res) => {
 // PUT /racas/:id - atualiza uma raça
 router.put('/:id', asyncHandler(async (req, res) => {
   const { nome, especie_id } = req.body;
-  if (!nome || !especie_id) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: nome, especie_id' });
+  if (!nomeValido(nome, 100) || !especie_id) {
+    return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), especie_id' });
   }
   if (!(await especieExiste(especie_id))) {
     return res.status(404).json({ erro: 'Espécie não encontrada' });
@@ -79,7 +80,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 
   try {
     await pool.query('UPDATE racas SET nome = ?, especie_id = ? WHERE id = ?', [
-      nome,
+      nome.trim(),
       especie_id,
       req.params.id,
     ]);

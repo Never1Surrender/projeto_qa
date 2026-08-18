@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
+const { nomeValido } = require('../utils/validadores');
 
 const router = express.Router();
 
@@ -22,12 +23,12 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // POST /especies - cria uma espécie
 router.post('/', asyncHandler(async (req, res) => {
   const { nome } = req.body;
-  if (!nome) {
-    return res.status(400).json({ erro: 'Campo obrigatório: nome' });
+  if (!nomeValido(nome, 50)) {
+    return res.status(400).json({ erro: 'Nome é obrigatório (máx. 50 caracteres)' });
   }
 
   try {
-    const [result] = await pool.query('INSERT INTO especies (nome) VALUES (?)', [nome]);
+    const [result] = await pool.query('INSERT INTO especies (nome) VALUES (?)', [nome.trim()]);
     const [rows] = await pool.query('SELECT * FROM especies WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -41,8 +42,8 @@ router.post('/', asyncHandler(async (req, res) => {
 // PUT /especies/:id - atualiza uma espécie
 router.put('/:id', asyncHandler(async (req, res) => {
   const { nome } = req.body;
-  if (!nome) {
-    return res.status(400).json({ erro: 'Campo obrigatório: nome' });
+  if (!nomeValido(nome, 50)) {
+    return res.status(400).json({ erro: 'Nome é obrigatório (máx. 50 caracteres)' });
   }
 
   const [existente] = await pool.query('SELECT id FROM especies WHERE id = ?', [req.params.id]);
@@ -51,7 +52,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
   }
 
   try {
-    await pool.query('UPDATE especies SET nome = ? WHERE id = ?', [nome, req.params.id]);
+    await pool.query('UPDATE especies SET nome = ? WHERE id = ?', [nome.trim(), req.params.id]);
     const [rows] = await pool.query('SELECT * FROM especies WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (err) {

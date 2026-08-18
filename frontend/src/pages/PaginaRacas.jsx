@@ -103,7 +103,7 @@ export default function PaginaRacas() {
           <h2>{racaEditando ? 'Editar raça' : 'Nova raça'}</h2>
           <label>
             Nome *
-            <input name="nome" value={form.nome} onChange={handleChange} required />
+            <input name="nome" value={form.nome} onChange={handleChange} maxLength={100} required />
           </label>
           <label>
             Espécie *

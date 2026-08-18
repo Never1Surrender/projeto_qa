@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 const VAZIO = { nome: '', especie_id: '', raca_id: '', data_nascimento: '', cidade_id: '' };
+const IDADE_MAXIMA_ANOS = 30;
 
 export default function FormAnimal({ animalInicial, especies, racas, cidades, onSalvar, onCancelar }) {
   const [form, setForm] = useState(
@@ -44,7 +45,7 @@ export default function FormAnimal({ animalInicial, especies, racas, cidades, on
 
       <label>
         Nome *
-        <input name="nome" value={form.nome} onChange={handleChange} required />
+        <input name="nome" value={form.nome} onChange={handleChange} maxLength={100} required />
       </label>
 
       <label>
@@ -79,6 +80,9 @@ export default function FormAnimal({ animalInicial, especies, racas, cidades, on
           name="data_nascimento"
           type="date"
           max={new Date().toISOString().slice(0, 10)}
+          min={new Date(new Date().setFullYear(new Date().getFullYear() - IDADE_MAXIMA_ANOS))
+            .toISOString()
+            .slice(0, 10)}
           value={form.data_nascimento || ''}
           onChange={handleChange}
         />
