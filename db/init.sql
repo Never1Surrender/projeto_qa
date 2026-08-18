@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS adotantes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(150) NOT NULL,
+  contato VARCHAR(150) NOT NULL,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS animais (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  especie VARCHAR(50) NOT NULL,
+  raca VARCHAR(100),
+  data_nascimento DATE,
+  status ENUM('disponivel', 'adotado') NOT NULL DEFAULT 'disponivel',
+  adotante_id INT NULL,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_animal_adotante FOREIGN KEY (adotante_id) REFERENCES adotantes(id) ON DELETE SET NULL
+);
