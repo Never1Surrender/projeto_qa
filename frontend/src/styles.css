@@ -1,122 +1,210 @@
-* {
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans m-0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-extrabold;
+  }
 }
 
-body {
-  font-family: system-ui, sans-serif;
-  background: #f5f5f5;
-  margin: 0;
-  color: #222;
-}
+@layer components {
+  .container {
+    @apply max-w-4xl mx-auto p-6;
+  }
 
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-}
+  .toolbar {
+    @apply flex items-center justify-between gap-3 flex-wrap bg-white rounded-lg shadow-sm px-5 py-3 mb-7;
+  }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
+  .toolbar-titulo {
+    @apply flex items-center gap-2.5 font-extrabold text-xl text-ink;
+  }
 
-.erro {
-  background: #ffe1e1;
-  color: #a00;
-  padding: 10px 14px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-}
+  .toolbar-logo {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary-light text-lg;
+  }
 
-.filtros {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 16px;
-}
+  .toolbar-links {
+    @apply flex gap-1 flex-wrap;
+  }
 
-.tabela-animais {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+  .toolbar-links button {
+    @apply border-none bg-transparent font-bold text-ink-muted rounded-full px-4 py-2;
+  }
 
-.tabela-animais th,
-.tabela-animais td {
-  text-align: left;
-  padding: 10px 12px;
-  border-bottom: 1px solid #eee;
-}
+  .toolbar-links button:hover {
+    @apply bg-primary-light text-primary-dark border-transparent;
+  }
 
-.badge {
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.85em;
-}
+  .toolbar-links button.ativo {
+    @apply bg-primary text-white;
+  }
 
-.badge-disponivel {
-  background: #d7f5d7;
-  color: #1a7a1a;
-}
+  .toolbar-links button.ativo:hover {
+    @apply bg-primary-dark text-white;
+  }
 
-.badge-adotado {
-  background: #dbe4ff;
-  color: #2a4bb8;
-}
+  .erro {
+    @apply bg-danger-light text-danger-dark px-4 py-3 rounded-sm mb-4 font-bold border border-danger;
+  }
 
-.acoes button {
-  margin-right: 6px;
-}
+  .page-header {
+    @apply flex items-center justify-between mb-4;
+  }
 
-.btn-perigo {
-  background: #d33;
-  color: white;
-  border: none;
-}
+  .page-header h2 {
+    @apply m-0 text-2xl text-ink;
+  }
 
-.form-card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+  .filtros {
+    @apply flex flex-wrap gap-5 bg-white border border-line px-5 py-3.5 rounded-md mb-4 shadow-sm;
+  }
 
-.form-card label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.9em;
-}
+  .filtros label {
+    @apply flex flex-col gap-1 text-xs font-bold text-ink-muted uppercase tracking-wide;
+  }
 
-.form-card input,
-.form-card select {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-}
+  .filtros select {
+    @apply rounded-sm border-[1.5px] border-line px-2.5 py-1.5 text-sm font-semibold bg-white text-ink normal-case tracking-normal;
+  }
 
-.form-actions {
-  display: flex;
-  gap: 8px;
-}
+  .empty-state {
+    @apply text-center py-12 px-6 text-ink-muted bg-white border-2 border-dashed border-line rounded-lg font-semibold;
+  }
 
-button {
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #fff;
-}
+  .empty-emoji {
+    @apply block text-4xl mb-2;
+  }
 
-button:hover {
-  background: #f0f0f0;
+  .tabela-animais {
+    @apply w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm border border-line;
+  }
+
+  .tabela-animais th,
+  .tabela-animais td {
+    @apply text-left px-4 py-3 border-b border-line;
+  }
+
+  .tabela-animais th {
+    @apply bg-bg text-xs uppercase tracking-wide text-ink-muted font-extrabold;
+  }
+
+  .tabela-animais tbody tr {
+    @apply transition-colors;
+  }
+
+  .tabela-animais tbody tr:hover {
+    @apply bg-primary-light;
+  }
+
+  .tabela-animais tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold;
+  }
+
+  .badge-disponivel {
+    @apply bg-secondary-light text-secondary-dark;
+  }
+
+  .badge-adotado {
+    @apply bg-primary-light text-primary-dark;
+  }
+
+  .acoes {
+    @apply flex items-center gap-1.5;
+  }
+
+  .form-card {
+    @apply bg-white p-6 rounded-lg max-w-md flex flex-col gap-3.5 shadow-md border border-line;
+  }
+
+  .form-card h2 {
+    @apply m-0 mb-1 text-xl text-ink;
+  }
+
+  .form-card label {
+    @apply flex flex-col gap-1.5 text-xs font-bold text-ink-muted uppercase tracking-wide;
+  }
+
+  .form-card input,
+  .form-card select {
+    @apply px-3 py-2.5 border-[1.5px] border-line rounded-sm text-base font-semibold normal-case tracking-normal bg-white text-ink transition-colors;
+  }
+
+  .form-card input:disabled,
+  .form-card select:disabled {
+    @apply opacity-55 cursor-not-allowed;
+  }
+
+  .form-card input:focus,
+  .form-card select:focus,
+  .filtros select:focus {
+    @apply outline-none border-primary ring-4 ring-primary-light;
+  }
+
+  .form-actions {
+    @apply flex gap-2.5 mt-1;
+  }
+
+  button {
+    @apply cursor-pointer px-5 py-2.5 rounded-sm border-[1.5px] border-line bg-white text-ink font-bold text-sm transition-all;
+  }
+
+  button:hover {
+    @apply border-primary text-primary-dark;
+  }
+
+  button:active {
+    @apply scale-[0.97];
+  }
+
+  button:focus-visible {
+    @apply outline outline-2 outline-primary outline-offset-2;
+  }
+
+  .btn-primario {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .btn-primario:hover {
+    @apply bg-primary-dark border-primary-dark text-white;
+  }
+
+  .btn-secundario {
+    @apply bg-secondary border-secondary text-white;
+  }
+
+  .btn-secundario:hover {
+    @apply bg-secondary-dark border-secondary-dark text-white;
+  }
+
+  .btn-perigo {
+    @apply bg-danger-light border-transparent text-danger-dark;
+  }
+
+  .btn-perigo:hover {
+    @apply bg-danger border-danger text-white;
+  }
+
+  .btn-icone {
+    @apply inline-flex items-center justify-center w-[34px] h-[34px] p-0 rounded-full;
+  }
+
+  .btn-icone.btn-perigo {
+    @apply bg-danger border-danger text-white;
+  }
+
+  .btn-icone.btn-perigo:hover {
+    @apply bg-danger-dark border-danger-dark;
+  }
 }

@@ -14,7 +14,7 @@ CRUD simples para prática de QA (testes de API, UI e banco de dados).
 docker compose up -d
 ```
 
-Isso sobe um container MariaDB na porta `3307` do host (mapeada para a `3306` interna do container — a `3306` já estava ocupada por outro serviço nesta máquina), já com as tabelas `animais` e `adotantes` criadas (script `db/init.sql`).
+Isso sobe um container MariaDB na porta `3307` do host (mapeada para a `3306` interna do container — a `3306` já estava ocupada por outro serviço nesta máquina), já com as tabelas `cidades`, `especies`, `racas`, `animais` e `adotantes` criadas (script `db/init.sql`), com dados iniciais pré-cadastrados.
 
 Verifique se o container está saudável:
 
@@ -47,7 +47,7 @@ Frontend sobe em `http://localhost:5173`.
 
 | Método | Rota                    | Descrição                              |
 |--------|--------------------------|-----------------------------------------|
-| GET    | `/animais`                | Lista animais (filtro `?status=`)      |
+| GET    | `/animais`                | Lista animais (filtros `?status=`, `?especie_id=`, `?cidade_id=`) |
 | GET    | `/animais/:id`             | Detalhe de um animal                   |
 | POST   | `/animais`                 | Cria um animal                         |
 | PUT    | `/animais/:id`              | Atualiza um animal                     |
@@ -56,11 +56,37 @@ Frontend sobe em `http://localhost:5173`.
 | GET    | `/adotantes`               | Lista adotantes                        |
 | GET    | `/adotantes/:id`            | Detalhe de um adotante                 |
 | POST   | `/adotantes`                | Cria um adotante                       |
+| GET    | `/cidades`                  | Lista cidades                          |
+| POST   | `/cidades`                  | Cria uma cidade                        |
+| GET    | `/especies`                 | Lista espécies                         |
+| POST   | `/especies`                 | Cria uma espécie                       |
+| GET    | `/racas`                    | Lista raças (filtro `?especie_id=`)    |
+| POST   | `/racas`                    | Cria uma raça vinculada a uma espécie  |
 
 ### Campos de `animais`
 
-- `especie`: um dos valores `cachorro`, `gato`, `ave`, `coelho`, `reptil`, `outro`
+- `especie_id`: obrigatório, referencia uma espécie cadastrada (FK)
+- `raca_id`: opcional, referencia uma raça cadastrada — precisa pertencer à `especie_id` informada (senão retorna 400)
 - `data_nascimento`: data (opcional, não pode ser futura). A API retorna também um campo `idade` calculado automaticamente a partir dela (em anos) — exibido na listagem do frontend.
+- `cidade_id`: opcional, referencia uma cidade cadastrada (FK com `ON DELETE SET NULL`)
+
+### Campos de `adotantes`
+
+- `cidade_id`: opcional, mesma referência à tabela `cidades`
+
+### Campos de `cidades`
+
+- `nome`: obrigatório
+- `estado`: sigla UF com 2 letras (normalizada para maiúsculo), obrigatório. Combinação `nome`+`estado` é única (retorna 409 se duplicada).
+
+### Campos de `especies`
+
+- `nome`: obrigatório e único (retorna 409 se duplicado)
+
+### Campos de `racas`
+
+- `nome`: obrigatório
+- `especie_id`: obrigatório, referencia uma espécie cadastrada. Combinação `nome`+`especie_id` é única (retorna 409 se duplicada).
 
 ## Resetar os dados
 

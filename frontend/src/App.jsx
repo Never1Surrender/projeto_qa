@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
+import Toolbar from './components/Toolbar';
 import ListaAnimais from './pages/ListaAnimais';
 import FormAnimal from './pages/FormAnimal';
 import FormAdotante from './pages/FormAdotante';
+import PaginaAdotantes from './pages/PaginaAdotantes';
+import PaginaCidades from './pages/PaginaCidades';
+import PaginaEspecies from './pages/PaginaEspecies';
+import PaginaRacas from './pages/PaginaRacas';
 
 const VIEWS = {
   LISTA: 'lista',
@@ -11,18 +16,27 @@ const VIEWS = {
 };
 
 export default function App() {
+  const [pagina, setPagina] = useState('animais');
   const [view, setView] = useState(VIEWS.LISTA);
   const [animais, setAnimais] = useState([]);
   const [adotantes, setAdotantes] = useState([]);
+  const [cidades, setCidades] = useState([]);
+  const [especies, setEspecies] = useState([]);
+  const [racas, setRacas] = useState([]);
   const [filtroStatus, setFiltroStatus] = useState('');
   const [filtroEspecie, setFiltroEspecie] = useState('');
+  const [filtroCidade, setFiltroCidade] = useState('');
   const [animalSelecionado, setAnimalSelecionado] = useState(null);
   const [erro, setErro] = useState('');
 
   async function carregarAnimais() {
     try {
       setErro('');
-      const dados = await api.listarAnimais({ status: filtroStatus, especie: filtroEspecie });
+      const dados = await api.listarAnimais({
+        status: filtroStatus,
+        especie_id: filtroEspecie,
+        cidade_id: filtroCidade,
+      });
       setAnimais(dados);
     } catch (e) {
       setErro(e.message);
@@ -38,13 +52,52 @@ export default function App() {
     }
   }
 
+  async function carregarCidades() {
+    try {
+      const dados = await api.listarCidades();
+      setCidades(dados);
+    } catch (e) {
+      setErro(e.message);
+    }
+  }
+
+  async function carregarEspecies() {
+    try {
+      const dados = await api.listarEspecies();
+      setEspecies(dados);
+    } catch (e) {
+      setErro(e.message);
+    }
+  }
+
+  async function carregarRacas() {
+    try {
+      const dados = await api.listarRacas();
+      setRacas(dados);
+    } catch (e) {
+      setErro(e.message);
+    }
+  }
+
   useEffect(() => {
     carregarAnimais();
-  }, [filtroStatus, filtroEspecie]);
+  }, [filtroStatus, filtroEspecie, filtroCidade]);
 
   useEffect(() => {
     carregarAdotantes();
+    carregarCidades();
+    carregarEspecies();
+    carregarRacas();
   }, []);
+
+  function navegar(novaPagina) {
+    setPagina(novaPagina);
+    setView(VIEWS.LISTA);
+    setErro('');
+    carregarCidades();
+    carregarEspecies();
+    carregarRacas();
+  }
 
   function abrirNovoAnimal() {
     setAnimalSelecionado(null);
@@ -100,43 +153,74 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      <header>
-        <h1>🐾 Adoção de Animais</h1>
-        {view === VIEWS.LISTA && <button onClick={abrirNovoAnimal}>+ Novo animal</button>}
-      </header>
+    <div className="container relative">
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute top-1/3 -right-32 w-[28rem] h-[28rem] rounded-full bg-secondary/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
+      </div>
+
+      <Toolbar paginaAtiva={pagina} onNavegar={navegar} />
 
       {erro && <p className="erro">{erro}</p>}
 
-      {view === VIEWS.LISTA && (
-        <ListaAnimais
-          animais={animais}
-          filtroStatus={filtroStatus}
-          onFiltroStatusChange={setFiltroStatus}
-          filtroEspecie={filtroEspecie}
-          onFiltroEspecieChange={setFiltroEspecie}
-          onEditar={abrirEditarAnimal}
-          onExcluir={excluirAnimal}
-          onAdotar={abrirAdotar}
-        />
+      {pagina === 'animais' && (
+        <>
+          {view === VIEWS.LISTA && (
+            <>
+              <div className="page-header">
+                <h2>Animais</h2>
+                <button className="btn-primario" onClick={abrirNovoAnimal}>
+                  + Novo animal
+                </button>
+              </div>
+              <ListaAnimais
+                animais={animais}
+                cidades={cidades}
+                especies={especies}
+                filtroStatus={filtroStatus}
+                onFiltroStatusChange={setFiltroStatus}
+                filtroEspecie={filtroEspecie}
+                onFiltroEspecieChange={setFiltroEspecie}
+                filtroCidade={filtroCidade}
+                onFiltroCidadeChange={setFiltroCidade}
+                onEditar={abrirEditarAnimal}
+                onExcluir={excluirAnimal}
+                onAdotar={abrirAdotar}
+              />
+            </>
+          )}
+
+          {view === VIEWS.FORM_ANIMAL && (
+            <FormAnimal
+              animalInicial={animalSelecionado}
+              cidades={cidades}
+              especies={especies}
+              racas={racas}
+              onSalvar={salvarAnimal}
+              onCancelar={() => setView(VIEWS.LISTA)}
+            />
+          )}
+
+          {view === VIEWS.FORM_ADOTAR && (
+            <FormAdotante
+              animal={animalSelecionado}
+              adotantes={adotantes}
+              cidades={cidades}
+              onAdotar={confirmarAdocao}
+              onCancelar={() => setView(VIEWS.LISTA)}
+            />
+          )}
+        </>
       )}
 
-      {view === VIEWS.FORM_ANIMAL && (
-        <FormAnimal
-          animalInicial={animalSelecionado}
-          onSalvar={salvarAnimal}
-          onCancelar={() => setView(VIEWS.LISTA)}
-        />
-      )}
+      {pagina === 'adotantes' && <PaginaAdotantes />}
 
-      {view === VIEWS.FORM_ADOTAR && (
-        <FormAdotante
-          animal={animalSelecionado}
-          adotantes={adotantes}
-          onAdotar={confirmarAdocao}
-          onCancelar={() => setView(VIEWS.LISTA)}
-        />
-      )}
+      {pagina === 'cidades' && <PaginaCidades />}
+
+      {pagina === 'especies' && <PaginaEspecies />}
+
+      {pagina === 'racas' && <PaginaRacas />}
     </div>
   );
 }

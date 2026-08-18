@@ -1,25 +1,29 @@
 import { useState } from 'react';
 
-const VAZIO = { nome: '', especie: '', raca: '', data_nascimento: '' };
+const VAZIO = { nome: '', especie_id: '', raca_id: '', data_nascimento: '', cidade_id: '' };
 
-const ESPECIES = [
-  { valor: 'cachorro', rotulo: 'Cachorro' },
-  { valor: 'gato', rotulo: 'Gato' },
-  { valor: 'ave', rotulo: 'Ave' },
-  { valor: 'coelho', rotulo: 'Coelho' },
-  { valor: 'reptil', rotulo: 'Réptil' },
-  { valor: 'outro', rotulo: 'Outro' },
-];
-
-export default function FormAnimal({ animalInicial, onSalvar, onCancelar }) {
+export default function FormAnimal({ animalInicial, especies, racas, cidades, onSalvar, onCancelar }) {
   const [form, setForm] = useState(
     animalInicial
-      ? { ...VAZIO, ...animalInicial, data_nascimento: animalInicial.data_nascimento?.slice(0, 10) || '' }
+      ? {
+          ...VAZIO,
+          ...animalInicial,
+          especie_id: animalInicial.especie_id || '',
+          raca_id: animalInicial.raca_id || '',
+          data_nascimento: animalInicial.data_nascimento?.slice(0, 10) || '',
+          cidade_id: animalInicial.cidade_id || '',
+        }
       : VAZIO
   );
 
+  const racasDaEspecie = racas.filter((r) => String(r.especie_id) === String(form.especie_id));
+
   function handleChange(e) {
     const { name, value } = e.target;
+    if (name === 'especie_id') {
+      setForm((prev) => ({ ...prev, especie_id: value, raca_id: '' }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -27,9 +31,10 @@ export default function FormAnimal({ animalInicial, onSalvar, onCancelar }) {
     e.preventDefault();
     onSalvar({
       nome: form.nome,
-      especie: form.especie,
-      raca: form.raca || null,
+      especie_id: form.especie_id,
+      raca_id: form.raca_id || null,
       data_nascimento: form.data_nascimento || null,
+      cidade_id: form.cidade_id || null,
     });
   }
 
@@ -44,13 +49,13 @@ export default function FormAnimal({ animalInicial, onSalvar, onCancelar }) {
 
       <label>
         Espécie *
-        <select name="especie" value={form.especie} onChange={handleChange} required>
+        <select name="especie_id" value={form.especie_id} onChange={handleChange} required>
           <option value="" disabled>
             Selecione...
           </option>
-          {ESPECIES.map((e) => (
-            <option key={e.valor} value={e.valor}>
-              {e.rotulo}
+          {especies.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.nome}
             </option>
           ))}
         </select>
@@ -58,7 +63,14 @@ export default function FormAnimal({ animalInicial, onSalvar, onCancelar }) {
 
       <label>
         Raça
-        <input name="raca" value={form.raca || ''} onChange={handleChange} />
+        <select name="raca_id" value={form.raca_id} onChange={handleChange} disabled={!form.especie_id}>
+          <option value="">-- Não informado --</option>
+          {racasDaEspecie.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.nome}
+            </option>
+          ))}
+        </select>
       </label>
 
       <label>
@@ -72,8 +84,22 @@ export default function FormAnimal({ animalInicial, onSalvar, onCancelar }) {
         />
       </label>
 
+      <label>
+        Cidade
+        <select name="cidade_id" value={form.cidade_id} onChange={handleChange}>
+          <option value="">-- Não informado --</option>
+          {cidades.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}/{c.estado}
+            </option>
+          ))}
+        </select>
+      </label>
+
       <div className="form-actions">
-        <button type="submit">Salvar</button>
+        <button type="submit" className="btn-primario">
+          Salvar
+        </button>
         <button type="button" onClick={onCancelar}>
           Cancelar
         </button>

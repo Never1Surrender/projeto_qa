@@ -4,6 +4,9 @@ require('dotenv').config();
 
 const animaisRouter = require('./routes/animais');
 const adotantesRouter = require('./routes/adotantes');
+const cidadesRouter = require('./routes/cidades');
+const especiesRouter = require('./routes/especies');
+const racasRouter = require('./routes/racas');
 
 const app = express();
 
@@ -16,6 +19,9 @@ app.get('/', (req, res) => {
 
 app.use('/animais', animaisRouter);
 app.use('/adotantes', adotantesRouter);
+app.use('/cidades', cidadesRouter);
+app.use('/especies', especiesRouter);
+app.use('/racas', racasRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);

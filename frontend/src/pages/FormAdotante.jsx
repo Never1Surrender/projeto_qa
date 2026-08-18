@@ -1,16 +1,17 @@
 import { useState } from 'react';
 
-export default function FormAdotante({ animal, adotantes, onAdotar, onCancelar }) {
+export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onCancelar }) {
   const [adotanteId, setAdotanteId] = useState('');
   const [nome, setNome] = useState('');
   const [contato, setContato] = useState('');
+  const [cidadeId, setCidadeId] = useState('');
 
   function handleSubmit(e) {
     e.preventDefault();
     if (adotanteId) {
       onAdotar({ adotante_id: Number(adotanteId) });
     } else {
-      onAdotar({ nome, contato });
+      onAdotar({ nome, contato, cidade_id: cidadeId || null });
     }
   }
 
@@ -40,11 +41,24 @@ export default function FormAdotante({ animal, adotantes, onAdotar, onCancelar }
             Contato (telefone/email) *
             <input value={contato} onChange={(e) => setContato(e.target.value)} required />
           </label>
+          <label>
+            Cidade
+            <select value={cidadeId} onChange={(e) => setCidadeId(e.target.value)}>
+              <option value="">-- Não informado --</option>
+              {cidades.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}/{c.estado}
+                </option>
+              ))}
+            </select>
+          </label>
         </>
       )}
 
       <div className="form-actions">
-        <button type="submit">Confirmar adoção</button>
+        <button type="submit" className="btn-secundario">
+          Confirmar adoção
+        </button>
         <button type="button" onClick={onCancelar}>
           Cancelar
         </button>

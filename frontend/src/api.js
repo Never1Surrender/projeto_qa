@@ -23,7 +23,8 @@ export const api = {
   listarAnimais: (filtros = {}) => {
     const params = new URLSearchParams();
     if (filtros.status) params.set('status', filtros.status);
-    if (filtros.especie) params.set('especie', filtros.especie);
+    if (filtros.especie_id) params.set('especie_id', filtros.especie_id);
+    if (filtros.cidade_id) params.set('cidade_id', filtros.cidade_id);
     const query = params.toString();
     return request(`/animais${query ? `?${query}` : ''}`);
   },
@@ -38,4 +39,24 @@ export const api = {
   listarAdotantes: () => request('/adotantes'),
   criarAdotante: (adotante) =>
     request('/adotantes', { method: 'POST', body: JSON.stringify(adotante) }),
+  atualizarAdotante: (id, adotante) =>
+    request(`/adotantes/${id}`, { method: 'PUT', body: JSON.stringify(adotante) }),
+  excluirAdotante: (id) => request(`/adotantes/${id}`, { method: 'DELETE' }),
+
+  listarCidades: () => request('/cidades'),
+  criarCidade: (cidade) => request('/cidades', { method: 'POST', body: JSON.stringify(cidade) }),
+  atualizarCidade: (id, cidade) =>
+    request(`/cidades/${id}`, { method: 'PUT', body: JSON.stringify(cidade) }),
+  excluirCidade: (id) => request(`/cidades/${id}`, { method: 'DELETE' }),
+
+  listarEspecies: () => request('/especies'),
+  criarEspecie: (especie) => request('/especies', { method: 'POST', body: JSON.stringify(especie) }),
+  atualizarEspecie: (id, especie) =>
+    request(`/especies/${id}`, { method: 'PUT', body: JSON.stringify(especie) }),
+  excluirEspecie: (id) => request(`/especies/${id}`, { method: 'DELETE' }),
+
+  listarRacas: () => request('/racas'),
+  criarRaca: (raca) => request('/racas', { method: 'POST', body: JSON.stringify(raca) }),
+  atualizarRaca: (id, raca) => request(`/racas/${id}`, { method: 'PUT', body: JSON.stringify(raca) }),
+  excluirRaca: (id) => request(`/racas/${id}`, { method: 'DELETE' }),
 };
