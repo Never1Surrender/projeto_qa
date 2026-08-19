@@ -1,23 +1,14 @@
 const PAGINAS = [
-  { chave: 'animais', rotulo: 'Animais', icone: '🐾' },
-  { chave: 'adotantes', rotulo: 'Adotantes', icone: '🧑‍🤝‍🧑' },
-  { chave: 'cidades', rotulo: 'Cidades', icone: '📍' },
-  { chave: 'especies', rotulo: 'Espécies', icone: '🏷️' },
-  { chave: 'racas', rotulo: 'Raças', icone: '🧬' },
+  { chave: 'animais', rotulo: 'Animais' },
+  { chave: 'adotantes', rotulo: 'Adotantes' },
+  { chave: 'cidades', rotulo: 'Cidades' },
+  { chave: 'especies', rotulo: 'Espécies' },
+  { chave: 'racas', rotulo: 'Raças' },
 ];
 
 export default function Toolbar({ paginaAtiva, onNavegar }) {
   return (
     <nav className="toolbar bg-white">
-      <div className="toolbar-titulo">
-        <span className="toolbar-logo bg-gradient-to-br from-primary to-secondary text-white shadow-sm">🐾</span>
-        <div className="flex flex-col leading-tight">
-          <span>Adoção de Animais</span>
-          <span className="text-xs font-semibold text-ink-muted normal-case tracking-normal">
-            encontre um novo lar 🏡
-          </span>
-        </div>
-      </div>
       <div className="toolbar-links">
         {PAGINAS.map((p) => (
           <button
@@ -25,7 +16,7 @@ export default function Toolbar({ paginaAtiva, onNavegar }) {
             className={paginaAtiva === p.chave ? 'ativo' : ''}
             onClick={() => onNavegar(p.chave)}
           >
-            {p.icone} {p.rotulo}
+            {p.rotulo}
           </button>
         ))}
       </div>

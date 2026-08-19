@@ -1,13 +1,28 @@
 import { useState } from 'react';
 import { formatarCPF, formatarTelefone } from '../utils';
+import SeletorCidade from '../components/SeletorCidade';
+import { useConfirm } from '../components/ConfirmDialog';
 
 export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onCancelar }) {
+  const confirmar = useConfirm();
   const [adotanteId, setAdotanteId] = useState('');
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [cidadeId, setCidadeId] = useState('');
+
+  async function handleCancelar() {
+    const alterado = Boolean(adotanteId || nome || cpf || telefone || email || cidadeId);
+    if (alterado) {
+      const ok = await confirmar('Você tem alterações não salvas. Deseja realmente cancelar?', {
+        textoConfirmar: 'Descartar',
+        perigo: true,
+      });
+      if (!ok) return;
+    }
+    onCancelar();
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -63,17 +78,7 @@ export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onC
             E-mail
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150} />
           </label>
-          <label>
-            Cidade
-            <select value={cidadeId} onChange={(e) => setCidadeId(e.target.value)}>
-              <option value="">-- Não informado --</option>
-              {cidades.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}/{c.estado}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SeletorCidade cidades={cidades} value={cidadeId} onChange={setCidadeId} />
         </>
       )}
 
@@ -81,7 +86,7 @@ export default function FormAdotante({ animal, adotantes, cidades, onAdotar, onC
         <button type="submit" className="btn-secundario">
           Confirmar adoção
         </button>
-        <button type="button" onClick={onCancelar}>
+        <button type="button" onClick={handleCancelar}>
           Cancelar
         </button>
       </div>

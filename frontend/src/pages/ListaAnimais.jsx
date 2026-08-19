@@ -1,4 +1,5 @@
 import { IconeEditar, IconeExcluir } from '../components/Icones';
+import Combobox from '../components/Combobox';
 
 const STATUS_INFO = {
   disponivel: { rotulo: 'Disponível', icone: '💚' },
@@ -43,26 +44,25 @@ export default function ListaAnimais({
 
         <label>
           Filtrar por espécie:
-          <select value={filtroEspecie} onChange={(e) => onFiltroEspecieChange(e.target.value)}>
-            <option value="">Todas</option>
-            {especies.map((esp) => (
-              <option key={esp.id} value={esp.id}>
-                {esp.nome}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            options={[{ value: '', label: 'Todas' }, ...especies.map((esp) => ({ value: esp.id, label: esp.nome }))]}
+            value={filtroEspecie}
+            onChange={onFiltroEspecieChange}
+            placeholder="Digite ou selecione..."
+          />
         </label>
 
         <label>
           Filtrar por cidade:
-          <select value={filtroCidade} onChange={(e) => onFiltroCidadeChange(e.target.value)}>
-            <option value="">Todas</option>
-            {cidades.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}/{c.estado}
-              </option>
-            ))}
-          </select>
+          <Combobox
+            options={[
+              { value: '', label: 'Todas' },
+              ...cidades.map((c) => ({ value: c.id, label: `${c.nome}/${c.estado}` })),
+            ]}
+            value={filtroCidade}
+            onChange={onFiltroCidadeChange}
+            placeholder="Digite ou selecione..."
+          />
         </label>
       </div>
 
@@ -78,29 +78,32 @@ export default function ListaAnimais({
           {animais.map((animal) => (
             <div
               key={animal.id}
-              className="group bg-white rounded-lg border border-line shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4"
+              className="group bg-white rounded-lg border border-line shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col items-center text-center gap-4"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-primary-light to-secondary-light text-2xl">
-                    {ESPECIE_EMOJI[animal.especie_nome] || '🐾'}
-                  </span>
-                  <div>
-                    <div className="font-extrabold text-lg text-ink leading-tight">{animal.nome}</div>
-                    <div className="text-sm text-ink-muted font-semibold">
-                      {animal.especie_nome}
-                      {animal.raca_nome ? ` · ${animal.raca_nome}` : ''}
-                    </div>
-                  </div>
+              <div className="min-w-0 w-full">
+                <div className="font-extrabold text-lg text-ink leading-tight truncate" title={animal.nome}>
+                  {animal.nome}
                 </div>
-                <span className={`badge badge-${animal.status} shrink-0`}>
-                  {STATUS_INFO[animal.status]?.icone} {STATUS_INFO[animal.status]?.rotulo || animal.status}
-                </span>
+                <div className="text-sm text-ink-muted font-semibold truncate">
+                  {animal.especie_nome}
+                  {animal.raca_nome ? ` · ${animal.raca_nome}` : ''}
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted font-semibold">
-                <span>🎂 {animal.idade != null ? `${animal.idade} ano${animal.idade === 1 ? '' : 's'}` : 'Idade não informada'}</span>
-                <span>📍 {animal.cidade_nome ? `${animal.cidade_nome}/${animal.cidade_estado}` : 'Cidade não informada'}</span>
+              <span className="inline-flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-primary-light to-secondary-light text-2xl">
+                {ESPECIE_EMOJI[animal.especie_nome] || '🐾'}
+              </span>
+
+              <div className="flex flex-col items-center gap-1.5 text-sm text-ink-muted font-semibold min-w-0 w-full">
+                <span className={`badge badge-${animal.status} w-fit`}>
+                  {STATUS_INFO[animal.status]?.icone} {STATUS_INFO[animal.status]?.rotulo || animal.status}
+                </span>
+                <span className="min-w-0 break-words">
+                  🎂 {animal.idade != null ? `${animal.idade} ano${animal.idade === 1 ? '' : 's'}` : 'Idade não informada'}
+                </span>
+                <span className="min-w-0 break-words">
+                  📍 {animal.cidade_nome ? `${animal.cidade_nome}/${animal.cidade_estado}` : 'Cidade não informada'}
+                </span>
               </div>
 
               <div className="flex items-center gap-2 mt-auto pt-3 border-t border-line">

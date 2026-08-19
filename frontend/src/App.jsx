@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import Toolbar from './components/Toolbar';
+import { useNotificacao } from './components/Notificacoes';
+import { useConfirm } from './components/ConfirmDialog';
 import ListaAnimais from './pages/ListaAnimais';
 import FormAnimal from './pages/FormAnimal';
 import FormAdotante from './pages/FormAdotante';
@@ -16,6 +18,8 @@ const VIEWS = {
 };
 
 export default function App() {
+  const notificar = useNotificacao();
+  const confirmar = useConfirm();
   const [pagina, setPagina] = useState('animais');
   const [view, setView] = useState(VIEWS.LISTA);
   const [animais, setAnimais] = useState([]);
@@ -27,11 +31,9 @@ export default function App() {
   const [filtroEspecie, setFiltroEspecie] = useState('');
   const [filtroCidade, setFiltroCidade] = useState('');
   const [animalSelecionado, setAnimalSelecionado] = useState(null);
-  const [erro, setErro] = useState('');
 
   async function carregarAnimais() {
     try {
-      setErro('');
       const dados = await api.listarAnimais({
         status: filtroStatus,
         especie_id: filtroEspecie,
@@ -39,7 +41,7 @@ export default function App() {
       });
       setAnimais(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -48,7 +50,7 @@ export default function App() {
       const dados = await api.listarAdotantes();
       setAdotantes(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -57,7 +59,7 @@ export default function App() {
       const dados = await api.listarCidades();
       setCidades(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -66,7 +68,7 @@ export default function App() {
       const dados = await api.listarEspecies();
       setEspecies(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -75,7 +77,7 @@ export default function App() {
       const dados = await api.listarRacas();
       setRacas(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -93,7 +95,6 @@ export default function App() {
   function navegar(novaPagina) {
     setPagina(novaPagina);
     setView(VIEWS.LISTA);
-    setErro('');
     carregarCidades();
     carregarEspecies();
     carregarRacas();
@@ -116,39 +117,41 @@ export default function App() {
 
   async function salvarAnimal(dados) {
     try {
-      setErro('');
       if (animalSelecionado) {
         await api.atualizarAnimal(animalSelecionado.id, dados);
+        notificar('sucesso', 'Animal atualizado com sucesso!');
       } else {
         await api.criarAnimal(dados);
+        notificar('sucesso', 'Animal cadastrado com sucesso!');
       }
       setView(VIEWS.LISTA);
       await carregarAnimais();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
   async function excluirAnimal(animal) {
-    if (!window.confirm(`Excluir ${animal.nome}?`)) return;
+    const ok = await confirmar(`Excluir ${animal.nome}?`, { textoConfirmar: 'Excluir', perigo: true });
+    if (!ok) return;
     try {
-      setErro('');
       await api.excluirAnimal(animal.id);
+      notificar('sucesso', `${animal.nome} excluído com sucesso!`);
       await carregarAnimais();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
   async function confirmarAdocao(dadosAdocao) {
     try {
-      setErro('');
       await api.adotarAnimal(animalSelecionado.id, dadosAdocao);
+      notificar('sucesso', 'Adoção registrada com sucesso!');
       setView(VIEWS.LISTA);
       await carregarAnimais();
       await carregarAdotantes();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -160,9 +163,12 @@ export default function App() {
         <div className="absolute bottom-0 left-1/4 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
-      <Toolbar paginaAtiva={pagina} onNavegar={navegar} />
+      <div className="w-full h-48 rounded-lg mb-7 bg-gradient-to-br from-primary to-secondary flex flex-col items-center justify-center text-center text-white gap-1">
+        <h1 className="text-3xl font-extrabold">Adoção de Animais</h1>
+        <p className="font-semibold">encontre um novo lar</p>
+      </div>
 
-      {erro && <p className="erro">{erro}</p>}
+      <Toolbar paginaAtiva={pagina} onNavegar={navegar} />
 
       {pagina === 'animais' && (
         <>

@@ -20,15 +20,7 @@
   }
 
   .toolbar {
-    @apply flex items-center justify-between gap-3 flex-wrap bg-white rounded-lg shadow-sm px-5 py-3 mb-7;
-  }
-
-  .toolbar-titulo {
-    @apply flex items-center gap-2.5 font-extrabold text-xl text-ink;
-  }
-
-  .toolbar-logo {
-    @apply inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary-light text-lg;
+    @apply flex items-center justify-center gap-3 flex-wrap bg-white rounded-lg shadow-sm px-5 py-3 mb-7;
   }
 
   .toolbar-links {
@@ -51,10 +43,6 @@
     @apply bg-primary-dark text-white;
   }
 
-  .erro {
-    @apply bg-danger-light text-danger-dark px-4 py-3 rounded-sm mb-4 font-bold border border-danger;
-  }
-
   .page-header {
     @apply flex items-center justify-between mb-4;
   }
@@ -71,7 +59,8 @@
     @apply flex flex-col gap-1 text-xs font-bold text-ink-muted uppercase tracking-wide;
   }
 
-  .filtros select {
+  .filtros select,
+  .filtros input {
     @apply rounded-sm border-[1.5px] border-line px-2.5 py-1.5 text-sm font-semibold bg-white text-ink normal-case tracking-normal;
   }
 
@@ -148,7 +137,8 @@
 
   .form-card input:focus,
   .form-card select:focus,
-  .filtros select:focus {
+  .filtros select:focus,
+  .filtros input:focus {
     @apply outline-none border-primary ring-4 ring-primary-light;
   }
 

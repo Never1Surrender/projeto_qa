@@ -1,0 +1,24 @@
+{
+  "name": "projeto_qa",
+  "version": "1.0.0",
+  "description": "CRUD simples para prática de QA (testes de API, UI e banco de dados).",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Never1Surrender/projeto_qa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Never1Surrender/projeto_qa/issues"
+  },
+  "homepage": "https://github.com/Never1Surrender/projeto_qa#readme",
+  "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0"
+  }
+}

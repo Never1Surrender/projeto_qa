@@ -1,31 +1,54 @@
 import { useState } from 'react';
+import Combobox from '../components/Combobox';
+import SeletorCidade from '../components/SeletorCidade';
+import { useConfirm } from '../components/ConfirmDialog';
 
 const VAZIO = { nome: '', especie_id: '', raca_id: '', data_nascimento: '', cidade_id: '' };
 const IDADE_MAXIMA_ANOS = 30;
 
 export default function FormAnimal({ animalInicial, especies, racas, cidades, onSalvar, onCancelar }) {
-  const [form, setForm] = useState(
-    animalInicial
-      ? {
-          ...VAZIO,
-          ...animalInicial,
-          especie_id: animalInicial.especie_id || '',
-          raca_id: animalInicial.raca_id || '',
-          data_nascimento: animalInicial.data_nascimento?.slice(0, 10) || '',
-          cidade_id: animalInicial.cidade_id || '',
-        }
-      : VAZIO
-  );
+  const confirmar = useConfirm();
+  const valorInicial = animalInicial
+    ? {
+        ...VAZIO,
+        ...animalInicial,
+        especie_id: animalInicial.especie_id || '',
+        raca_id: animalInicial.raca_id || '',
+        data_nascimento: animalInicial.data_nascimento?.slice(0, 10) || '',
+        cidade_id: animalInicial.cidade_id || '',
+      }
+    : VAZIO;
+  const [form, setForm] = useState(valorInicial);
 
   const racasDaEspecie = racas.filter((r) => String(r.especie_id) === String(form.especie_id));
 
   function handleChange(e) {
     const { name, value } = e.target;
-    if (name === 'especie_id') {
-      setForm((prev) => ({ ...prev, especie_id: value, raca_id: '' }));
-      return;
-    }
     setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleEspecieChange(especieId) {
+    setForm((prev) => ({ ...prev, especie_id: especieId, raca_id: '' }));
+  }
+
+  function handleRacaChange(racaId) {
+    setForm((prev) => ({ ...prev, raca_id: racaId }));
+  }
+
+  function handleCidadeChange(cidadeId) {
+    setForm((prev) => ({ ...prev, cidade_id: cidadeId }));
+  }
+
+  async function handleCancelar() {
+    const alterado = JSON.stringify(form) !== JSON.stringify(valorInicial);
+    if (alterado) {
+      const ok = await confirmar('Você tem alterações não salvas. Deseja realmente cancelar?', {
+        textoConfirmar: 'Descartar',
+        perigo: true,
+      });
+      if (!ok) return;
+    }
+    onCancelar();
   }
 
   function handleSubmit(e) {
@@ -50,28 +73,24 @@ export default function FormAnimal({ animalInicial, especies, racas, cidades, on
 
       <label>
         Espécie *
-        <select name="especie_id" value={form.especie_id} onChange={handleChange} required>
-          <option value="" disabled>
-            Selecione...
-          </option>
-          {especies.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nome}
-            </option>
-          ))}
-        </select>
+        <Combobox
+          options={especies.map((e) => ({ value: e.id, label: e.nome }))}
+          value={form.especie_id}
+          onChange={handleEspecieChange}
+          placeholder="Digite ou selecione..."
+          required
+        />
       </label>
 
       <label>
         Raça
-        <select name="raca_id" value={form.raca_id} onChange={handleChange} disabled={!form.especie_id}>
-          <option value="">-- Não informado --</option>
-          {racasDaEspecie.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.nome}
-            </option>
-          ))}
-        </select>
+        <Combobox
+          options={racasDaEspecie.map((r) => ({ value: r.id, label: r.nome }))}
+          value={form.raca_id}
+          onChange={handleRacaChange}
+          placeholder={form.especie_id ? 'Digite ou selecione...' : 'Selecione uma espécie primeiro'}
+          disabled={!form.especie_id}
+        />
       </label>
 
       <label>
@@ -88,23 +107,13 @@ export default function FormAnimal({ animalInicial, especies, racas, cidades, on
         />
       </label>
 
-      <label>
-        Cidade
-        <select name="cidade_id" value={form.cidade_id} onChange={handleChange}>
-          <option value="">-- Não informado --</option>
-          {cidades.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}/{c.estado}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SeletorCidade cidades={cidades} value={form.cidade_id} onChange={handleCidadeChange} />
 
       <div className="form-actions">
         <button type="submit" className="btn-primario">
           Salvar
         </button>
-        <button type="button" onClick={onCancelar}>
+        <button type="button" onClick={handleCancelar}>
           Cancelar
         </button>
       </div>

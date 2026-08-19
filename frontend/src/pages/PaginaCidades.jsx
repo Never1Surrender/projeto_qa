@@ -2,23 +2,27 @@ import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { IconeEditar, IconeExcluir } from '../components/Icones';
 import { ESTADOS_BR } from '../constants';
+import { useNotificacao } from '../components/Notificacoes';
+import { useConfirm } from '../components/ConfirmDialog';
+import Combobox from '../components/Combobox';
 
 const VAZIO = { nome: '', estado: '' };
 
 export default function PaginaCidades() {
+  const notificar = useNotificacao();
+  const confirmar = useConfirm();
   const [cidades, setCidades] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [cidadeEditando, setCidadeEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
-  const [erro, setErro] = useState('');
+  const [formInicial, setFormInicial] = useState(VAZIO);
 
   async function carregar() {
     try {
-      setErro('');
       const dados = await api.listarCidades();
       setCidades(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -31,19 +35,34 @@ export default function PaginaCidades() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  function handleEstadoChange(estado) {
+    setForm((prev) => ({ ...prev, estado }));
+  }
+
   function abrirNova() {
     setCidadeEditando(null);
     setForm(VAZIO);
+    setFormInicial(VAZIO);
     setMostrarForm(true);
   }
 
   function abrirEditar(cidade) {
     setCidadeEditando(cidade);
-    setForm({ nome: cidade.nome, estado: cidade.estado });
+    const valores = { nome: cidade.nome, estado: cidade.estado };
+    setForm(valores);
+    setFormInicial(valores);
     setMostrarForm(true);
   }
 
-  function cancelar() {
+  async function cancelar() {
+    const alterado = JSON.stringify(form) !== JSON.stringify(formInicial);
+    if (alterado) {
+      const ok = await confirmar('Você tem alterações não salvas. Deseja realmente cancelar?', {
+        textoConfirmar: 'Descartar',
+        perigo: true,
+      });
+      if (!ok) return;
+    }
     setMostrarForm(false);
     setCidadeEditando(null);
   }
@@ -51,29 +70,34 @@ export default function PaginaCidades() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      setErro('');
       if (cidadeEditando) {
         await api.atualizarCidade(cidadeEditando.id, form);
+        notificar('sucesso', 'Cidade atualizada com sucesso!');
       } else {
         await api.criarCidade(form);
+        notificar('sucesso', 'Cidade cadastrada com sucesso!');
       }
       setForm(VAZIO);
       setMostrarForm(false);
       setCidadeEditando(null);
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
   async function handleExcluir(cidade) {
-    if (!window.confirm(`Excluir ${cidade.nome}/${cidade.estado}?`)) return;
+    const ok = await confirmar(`Excluir ${cidade.nome}/${cidade.estado}?`, {
+      textoConfirmar: 'Excluir',
+      perigo: true,
+    });
+    if (!ok) return;
     try {
-      setErro('');
       await api.excluirCidade(cidade.id);
+      notificar('sucesso', 'Cidade excluída com sucesso!');
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -81,12 +105,12 @@ export default function PaginaCidades() {
     <div>
       <div className="page-header">
         <h2>Cidades</h2>
-        <button className={mostrarForm ? '' : 'btn-primario'} onClick={mostrarForm ? cancelar : abrirNova}>
-          {mostrarForm ? 'Cancelar' : '+ Nova cidade'}
-        </button>
+        {!mostrarForm && (
+          <button className="btn-primario" onClick={abrirNova}>
+            + Nova cidade
+          </button>
+        )}
       </div>
-
-      {erro && <p className="erro">{erro}</p>}
 
       {mostrarForm && (
         <form className="form-card" onSubmit={handleSubmit}>
@@ -97,20 +121,20 @@ export default function PaginaCidades() {
           </label>
           <label>
             Estado (UF) *
-            <select name="estado" value={form.estado} onChange={handleChange} required>
-              <option value="" disabled>
-                Selecione...
-              </option>
-              {ESTADOS_BR.map((uf) => (
-                <option key={uf.sigla} value={uf.sigla}>
-                  {uf.sigla} - {uf.nome}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={ESTADOS_BR.map((uf) => ({ value: uf.sigla, label: uf.sigla }))}
+              value={form.estado}
+              onChange={handleEstadoChange}
+              placeholder="Digite ou selecione..."
+              required
+            />
           </label>
           <div className="form-actions">
             <button type="submit" className="btn-primario">
               Salvar
+            </button>
+            <button type="button" onClick={cancelar}>
+              Cancelar
             </button>
           </div>
         </form>

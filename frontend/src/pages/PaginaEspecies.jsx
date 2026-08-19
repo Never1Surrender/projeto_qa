@@ -1,23 +1,26 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { IconeEditar, IconeExcluir } from '../components/Icones';
+import { useNotificacao } from '../components/Notificacoes';
+import { useConfirm } from '../components/ConfirmDialog';
 
 const VAZIO = { nome: '' };
 
 export default function PaginaEspecies() {
+  const notificar = useNotificacao();
+  const confirmar = useConfirm();
   const [especies, setEspecies] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [especieEditando, setEspecieEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
-  const [erro, setErro] = useState('');
+  const [formInicial, setFormInicial] = useState(VAZIO);
 
   async function carregar() {
     try {
-      setErro('');
       const dados = await api.listarEspecies();
       setEspecies(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -33,16 +36,27 @@ export default function PaginaEspecies() {
   function abrirNova() {
     setEspecieEditando(null);
     setForm(VAZIO);
+    setFormInicial(VAZIO);
     setMostrarForm(true);
   }
 
   function abrirEditar(especie) {
     setEspecieEditando(especie);
-    setForm({ nome: especie.nome });
+    const valores = { nome: especie.nome };
+    setForm(valores);
+    setFormInicial(valores);
     setMostrarForm(true);
   }
 
-  function cancelar() {
+  async function cancelar() {
+    const alterado = JSON.stringify(form) !== JSON.stringify(formInicial);
+    if (alterado) {
+      const ok = await confirmar('Você tem alterações não salvas. Deseja realmente cancelar?', {
+        textoConfirmar: 'Descartar',
+        perigo: true,
+      });
+      if (!ok) return;
+    }
     setMostrarForm(false);
     setEspecieEditando(null);
   }
@@ -50,29 +64,31 @@ export default function PaginaEspecies() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      setErro('');
       if (especieEditando) {
         await api.atualizarEspecie(especieEditando.id, form);
+        notificar('sucesso', 'Espécie atualizada com sucesso!');
       } else {
         await api.criarEspecie(form);
+        notificar('sucesso', 'Espécie cadastrada com sucesso!');
       }
       setForm(VAZIO);
       setMostrarForm(false);
       setEspecieEditando(null);
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
   async function handleExcluir(especie) {
-    if (!window.confirm(`Excluir ${especie.nome}?`)) return;
+    const ok = await confirmar(`Excluir ${especie.nome}?`, { textoConfirmar: 'Excluir', perigo: true });
+    if (!ok) return;
     try {
-      setErro('');
       await api.excluirEspecie(especie.id);
+      notificar('sucesso', 'Espécie excluída com sucesso!');
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -80,12 +96,12 @@ export default function PaginaEspecies() {
     <div>
       <div className="page-header">
         <h2>Espécies</h2>
-        <button className={mostrarForm ? '' : 'btn-primario'} onClick={mostrarForm ? cancelar : abrirNova}>
-          {mostrarForm ? 'Cancelar' : '+ Nova espécie'}
-        </button>
+        {!mostrarForm && (
+          <button className="btn-primario" onClick={abrirNova}>
+            + Nova espécie
+          </button>
+        )}
       </div>
-
-      {erro && <p className="erro">{erro}</p>}
 
       {mostrarForm && (
         <form className="form-card" onSubmit={handleSubmit}>
@@ -97,6 +113,9 @@ export default function PaginaEspecies() {
           <div className="form-actions">
             <button type="submit" className="btn-primario">
               Salvar
+            </button>
+            <button type="button" onClick={cancelar}>
+              Cancelar
             </button>
           </div>
         </form>

@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { IconeEditar, IconeExcluir } from '../components/Icones';
+import { useNotificacao } from '../components/Notificacoes';
+import { useConfirm } from '../components/ConfirmDialog';
+import Combobox from '../components/Combobox';
 
 const VAZIO = { nome: '', especie_id: '' };
 
 export default function PaginaRacas() {
+  const notificar = useNotificacao();
+  const confirmar = useConfirm();
   const [racas, setRacas] = useState([]);
   const [especies, setEspecies] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [racaEditando, setRacaEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
-  const [erro, setErro] = useState('');
+  const [formInicial, setFormInicial] = useState(VAZIO);
 
   async function carregar() {
     try {
-      setErro('');
       const dados = await api.listarRacas();
       setRacas(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -27,7 +31,7 @@ export default function PaginaRacas() {
       const dados = await api.listarEspecies();
       setEspecies(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -41,19 +45,34 @@ export default function PaginaRacas() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  function handleEspecieChange(especieId) {
+    setForm((prev) => ({ ...prev, especie_id: especieId }));
+  }
+
   function abrirNova() {
     setRacaEditando(null);
     setForm(VAZIO);
+    setFormInicial(VAZIO);
     setMostrarForm(true);
   }
 
   function abrirEditar(raca) {
     setRacaEditando(raca);
-    setForm({ nome: raca.nome, especie_id: raca.especie_id });
+    const valores = { nome: raca.nome, especie_id: raca.especie_id };
+    setForm(valores);
+    setFormInicial(valores);
     setMostrarForm(true);
   }
 
-  function cancelar() {
+  async function cancelar() {
+    const alterado = JSON.stringify(form) !== JSON.stringify(formInicial);
+    if (alterado) {
+      const ok = await confirmar('Você tem alterações não salvas. Deseja realmente cancelar?', {
+        textoConfirmar: 'Descartar',
+        perigo: true,
+      });
+      if (!ok) return;
+    }
     setMostrarForm(false);
     setRacaEditando(null);
   }
@@ -61,29 +80,31 @@ export default function PaginaRacas() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      setErro('');
       if (racaEditando) {
         await api.atualizarRaca(racaEditando.id, form);
+        notificar('sucesso', 'Raça atualizada com sucesso!');
       } else {
         await api.criarRaca(form);
+        notificar('sucesso', 'Raça cadastrada com sucesso!');
       }
       setForm(VAZIO);
       setMostrarForm(false);
       setRacaEditando(null);
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
   async function handleExcluir(raca) {
-    if (!window.confirm(`Excluir ${raca.nome}?`)) return;
+    const ok = await confirmar(`Excluir ${raca.nome}?`, { textoConfirmar: 'Excluir', perigo: true });
+    if (!ok) return;
     try {
-      setErro('');
       await api.excluirRaca(raca.id);
+      notificar('sucesso', 'Raça excluída com sucesso!');
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -91,12 +112,12 @@ export default function PaginaRacas() {
     <div>
       <div className="page-header">
         <h2>Raças</h2>
-        <button className={mostrarForm ? '' : 'btn-primario'} onClick={mostrarForm ? cancelar : abrirNova}>
-          {mostrarForm ? 'Cancelar' : '+ Nova raça'}
-        </button>
+        {!mostrarForm && (
+          <button className="btn-primario" onClick={abrirNova}>
+            + Nova raça
+          </button>
+        )}
       </div>
-
-      {erro && <p className="erro">{erro}</p>}
 
       {mostrarForm && (
         <form className="form-card" onSubmit={handleSubmit}>
@@ -107,20 +128,20 @@ export default function PaginaRacas() {
           </label>
           <label>
             Espécie *
-            <select name="especie_id" value={form.especie_id} onChange={handleChange} required>
-              <option value="" disabled>
-                Selecione...
-              </option>
-              {especies.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nome}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={especies.map((e) => ({ value: e.id, label: e.nome }))}
+              value={form.especie_id}
+              onChange={handleEspecieChange}
+              placeholder="Digite ou selecione..."
+              required
+            />
           </label>
           <div className="form-actions">
             <button type="submit" className="btn-primario">
               Salvar
+            </button>
+            <button type="button" onClick={cancelar}>
+              Cancelar
             </button>
           </div>
         </form>

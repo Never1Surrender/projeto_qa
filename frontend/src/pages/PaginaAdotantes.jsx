@@ -2,24 +2,28 @@ import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { IconeEditar, IconeExcluir } from '../components/Icones';
 import { formatarCPF, formatarTelefone } from '../utils';
+import { useNotificacao } from '../components/Notificacoes';
+import { useConfirm } from '../components/ConfirmDialog';
+import SeletorCidade from '../components/SeletorCidade';
 
 const VAZIO = { nome: '', cpf: '', telefone: '', email: '', cidade_id: '' };
 
 export default function PaginaAdotantes() {
+  const notificar = useNotificacao();
+  const confirmar = useConfirm();
   const [adotantes, setAdotantes] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [adotanteEditando, setAdotanteEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
-  const [erro, setErro] = useState('');
+  const [formInicial, setFormInicial] = useState(VAZIO);
 
   async function carregar() {
     try {
-      setErro('');
       const dados = await api.listarAdotantes();
       setAdotantes(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -28,7 +32,7 @@ export default function PaginaAdotantes() {
       const dados = await api.listarCidades();
       setCidades(dados);
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -50,25 +54,40 @@ export default function PaginaAdotantes() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  function handleCidadeChange(cidadeId) {
+    setForm((prev) => ({ ...prev, cidade_id: cidadeId }));
+  }
+
   function abrirNovo() {
     setAdotanteEditando(null);
     setForm(VAZIO);
+    setFormInicial(VAZIO);
     setMostrarForm(true);
   }
 
   function abrirEditar(adotante) {
     setAdotanteEditando(adotante);
-    setForm({
+    const valores = {
       nome: adotante.nome,
       cpf: formatarCPF(adotante.cpf || ''),
       telefone: adotante.telefone ? formatarTelefone(adotante.telefone) : '',
       email: adotante.email || '',
       cidade_id: adotante.cidade_id || '',
-    });
+    };
+    setForm(valores);
+    setFormInicial(valores);
     setMostrarForm(true);
   }
 
-  function cancelar() {
+  async function cancelar() {
+    const alterado = JSON.stringify(form) !== JSON.stringify(formInicial);
+    if (alterado) {
+      const ok = await confirmar('Você tem alterações não salvas. Deseja realmente cancelar?', {
+        textoConfirmar: 'Descartar',
+        perigo: true,
+      });
+      if (!ok) return;
+    }
     setMostrarForm(false);
     setAdotanteEditando(null);
   }
@@ -76,7 +95,6 @@ export default function PaginaAdotantes() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      setErro('');
       const dados = {
         nome: form.nome,
         cpf: form.cpf,
@@ -86,26 +104,29 @@ export default function PaginaAdotantes() {
       };
       if (adotanteEditando) {
         await api.atualizarAdotante(adotanteEditando.id, dados);
+        notificar('sucesso', 'Adotante atualizado com sucesso!');
       } else {
         await api.criarAdotante(dados);
+        notificar('sucesso', 'Adotante cadastrado com sucesso!');
       }
       setForm(VAZIO);
       setMostrarForm(false);
       setAdotanteEditando(null);
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
   async function handleExcluir(adotante) {
-    if (!window.confirm(`Excluir ${adotante.nome}?`)) return;
+    const ok = await confirmar(`Excluir ${adotante.nome}?`, { textoConfirmar: 'Excluir', perigo: true });
+    if (!ok) return;
     try {
-      setErro('');
       await api.excluirAdotante(adotante.id);
+      notificar('sucesso', 'Adotante excluído com sucesso!');
       await carregar();
     } catch (e) {
-      setErro(e.message);
+      notificar('erro', e.message);
     }
   }
 
@@ -113,12 +134,12 @@ export default function PaginaAdotantes() {
     <div>
       <div className="page-header">
         <h2>Adotantes</h2>
-        <button className={mostrarForm ? '' : 'btn-primario'} onClick={mostrarForm ? cancelar : abrirNovo}>
-          {mostrarForm ? 'Cancelar' : '+ Novo adotante'}
-        </button>
+        {!mostrarForm && (
+          <button className="btn-primario" onClick={abrirNovo}>
+            + Novo adotante
+          </button>
+        )}
       </div>
-
-      {erro && <p className="erro">{erro}</p>}
 
       {mostrarForm && (
         <form className="form-card" onSubmit={handleSubmit}>
@@ -152,20 +173,13 @@ export default function PaginaAdotantes() {
             E-mail
             <input name="email" type="email" value={form.email} onChange={handleChange} maxLength={150} />
           </label>
-          <label>
-            Cidade
-            <select name="cidade_id" value={form.cidade_id} onChange={handleChange}>
-              <option value="">-- Não informado --</option>
-              {cidades.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}/{c.estado}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SeletorCidade cidades={cidades} value={form.cidade_id} onChange={handleCidadeChange} />
           <div className="form-actions">
             <button type="submit" className="btn-primario">
               Salvar
+            </button>
+            <button type="button" onClick={cancelar}>
+              Cancelar
             </button>
           </div>
         </form>
