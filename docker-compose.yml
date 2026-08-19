@@ -1,23 +1,81 @@
+# Lista de containers (serviços) que o Compose vai gerenciar
 services:
+  # Nome do serviço — dentro da rede interna do Compose, os outros containers
+  # enxergam este banco pelo hostname "mariadb" (não por localhost)
   mariadb:
+    # Imagem oficial do MariaDB, versão 11, baixada do Docker Hub
     image: mariadb:11
+    # Nome fixo do container (facilita usar docker exec, docker logs, etc.)
     container_name: adocao_mariadb
+    # Reinicia o container automaticamente se ele cair, exceto se for parado manualmente
     restart: unless-stopped
+    # Variáveis lidas pela imagem oficial do MariaDB apenas na primeira inicialização.
+    # Os valores vêm do arquivo .env na raiz do projeto (lido automaticamente pelo Compose)
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: adocao_animais
-      MYSQL_USER: adocao_user
-      MYSQL_PASSWORD: adocao_pass
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}  # senha do usuário administrador (root) do servidor
+      MYSQL_DATABASE: ${DB_NAME}                # banco criado automaticamente ao subir o container
+      MYSQL_USER: ${DB_USER}                    # usuário "de aplicação", com privilégio limitado a esse banco
+      MYSQL_PASSWORD: ${DB_PASSWORD}             # senha desse usuário de aplicação
+    # Mapeamento de portas: "porta-do-host:porta-do-container"
     ports:
-      - "3307:3306"
+      - "3307:3306"  # 3306 já estava ocupada por outro serviço nesta máquina, por isso 3307 no host
     volumes:
+      # Volume nomeado: persiste os dados do banco fora do ciclo de vida do container
+      # (sem isso, os dados seriam perdidos ao remover o container)
       - mariadb_data:/var/lib/mysql
+      # Bind mount: injeta o script local db/init.sql na pasta especial
+      # docker-entrypoint-initdb.d, que a imagem executa automaticamente,
+      # mas só na PRIMEIRA inicialização (quando o volume ainda está vazio)
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # Verificação de saúde: o Compose só considera o container "healthy" quando
+    # esse comando funcionar — usado pelo backend para esperar o banco estar pronto
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      interval: 5s   # roda o teste a cada 5 segundos
+      timeout: 5s    # tempo máximo de espera por cada tentativa
+      retries: 10    # até 10 tentativas antes de marcar como "unhealthy"
 
+  # Serviço da API (Node/Bun + Express)
+  backend:
+    # O Dockerfile na raiz é multi-stage (tem os estágios "backend" e "frontend").
+    # O "target" diz qual estágio usar para construir este serviço
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    container_name: adocao_backend
+    restart: unless-stopped
+    # Variáveis de ambiente que o código do backend usa para se conectar ao banco.
+    # DB_HOST aponta para "mariadb" (o nome do serviço acima), não para localhost,
+    # porque dentro da rede do Compose os containers se enxergam pelo nome do serviço
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    ports:
+      - "3001:3001"
+    # Só inicia o backend depois que o mariadb passar no healthcheck acima,
+    # evitando erro de conexão durante a subida do ambiente
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  # Serviço do frontend (React + Vite)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    container_name: adocao_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    # Só sobe depois que o backend estiver de pé, já que o frontend consome a API dele
+    depends_on:
+      - backend
+
+# Declaração dos volumes nomeados usados acima (o Docker gerencia onde ficam no host)
 volumes:
   mariadb_data:

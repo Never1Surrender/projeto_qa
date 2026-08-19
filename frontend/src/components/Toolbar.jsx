@@ -8,7 +8,7 @@ const PAGINAS = [
 
 export default function Toolbar({ paginaAtiva, onNavegar }) {
   return (
-    <nav className="toolbar sticky top-4 z-10 backdrop-blur bg-white/90">
+    <nav className="toolbar bg-white">
       <div className="toolbar-titulo">
         <span className="toolbar-logo bg-gradient-to-br from-primary to-secondary text-white shadow-sm">🐾</span>
         <div className="flex flex-col leading-tight">
