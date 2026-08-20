@@ -32,6 +32,17 @@ function nomeValido(nome, tamanhoMaximo) {
   return typeof nome === 'string' && nome.trim().length > 0 && nome.trim().length <= tamanhoMaximo;
 }
 
+function urlValida(url, tamanhoMaximo) {
+  if (typeof url !== 'string' || url.trim().length === 0) return false;
+  if (url.trim().length > tamanhoMaximo) return false;
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function validarCamposAdotante({ nome, cpf, telefone, email }) {
   if (!nomeValido(nome, 150)) {
     return 'Nome é obrigatório (máx. 150 caracteres)';
@@ -54,5 +65,6 @@ module.exports = {
   telefoneValido,
   emailValido,
   nomeValido,
+  urlValida,
   validarCamposAdotante,
 };

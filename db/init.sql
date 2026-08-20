@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS animais (
   status ENUM('disponivel', 'adotado') NOT NULL DEFAULT 'disponivel',
   adotante_id INT NULL,
   cidade_id INT NULL,
+  foto_url VARCHAR(500) NULL,
   criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_animal_adotante FOREIGN KEY (adotante_id) REFERENCES adotantes(id) ON DELETE SET NULL,
   CONSTRAINT fk_animal_cidade FOREIGN KEY (cidade_id) REFERENCES cidades(id) ON DELETE SET NULL,

@@ -150,41 +150,48 @@ export default function PaginaCidades() {
           )}
 
           {cidades.length > 0 && (
-            <table className="tabela-animais">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Estado</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cidades.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.nome}</td>
-                    <td>{c.estado}</td>
-                    <td className="acoes">
-                      <button
-                        className="btn-icone"
-                        title="Editar"
-                        aria-label={`Editar ${c.nome}`}
-                        onClick={() => abrirEditar(c)}
-                      >
-                        <IconeEditar />
-                      </button>
-                      <button
-                        className="btn-icone btn-perigo"
-                        title="Excluir"
-                        aria-label={`Excluir ${c.nome}`}
-                        onClick={() => handleExcluir(c)}
-                      >
-                        <IconeExcluir />
-                      </button>
-                    </td>
+            <div className="tabela-wrap">
+              <table className="tabela-animais">
+                <colgroup>
+                  <col />
+                  <col style={{ width: '140px' }} />
+                  <col style={{ width: '120px' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th className="centro">Estado</th>
+                    <th className="centro">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {cidades.map((c) => (
+                    <tr key={c.id}>
+                      <td>{c.nome}</td>
+                      <td className="centro">{c.estado}</td>
+                      <td className="acoes">
+                        <button
+                          className="btn-icone"
+                          title="Editar"
+                          aria-label={`Editar ${c.nome}`}
+                          onClick={() => abrirEditar(c)}
+                        >
+                          <IconeEditar />
+                        </button>
+                        <button
+                          className="btn-icone btn-perigo"
+                          title="Excluir"
+                          aria-label={`Excluir ${c.nome}`}
+                          onClick={() => handleExcluir(c)}
+                        >
+                          <IconeExcluir />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

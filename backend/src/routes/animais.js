@@ -1,12 +1,15 @@
 const express = require('express');
 const pool = require('../db');
 const asyncHandler = require('../utils/asyncHandler');
-const { somenteDigitos, nomeValido, validarCamposAdotante } = require('../utils/validadores');
+const { somenteDigitos, nomeValido, urlValida, validarCamposAdotante } = require('../utils/validadores');
 
 const router = express.Router();
 
 const STATUS_VALIDOS = ['disponivel', 'adotado'];
 const IDADE_MAXIMA_ANOS = 30;
+const ORDENACOES_VALIDAS = { nome: 'a.nome', idade: 'a.data_nascimento', criado_em: 'a.criado_em' };
+const LIMITE_PADRAO = 12;
+const LIMITE_MAXIMO = 100;
 
 const SELECT_ANIMAIS = `
   SELECT
@@ -15,6 +18,7 @@ const SELECT_ANIMAIS = `
     r.nome AS raca_nome,
     c.nome AS cidade_nome,
     c.estado AS cidade_estado,
+    ad.nome AS adotante_nome,
     CASE
       WHEN a.data_nascimento IS NULL THEN NULL
       ELSE TIMESTAMPDIFF(YEAR, a.data_nascimento, CURDATE())
@@ -23,6 +27,7 @@ const SELECT_ANIMAIS = `
   JOIN especies e ON e.id = a.especie_id
   LEFT JOIN racas r ON r.id = a.raca_id
   LEFT JOIN cidades c ON c.id = a.cidade_id
+  LEFT JOIN adotantes ad ON ad.id = a.adotante_id
 `;
 
 function dataNascimentoValida(data_nascimento) {
@@ -61,11 +66,18 @@ async function validarRaca(raca_id, especie_id) {
   return null;
 }
 
-// GET /animais - lista todos, com filtros opcionais ?status=, ?especie_id=, ?cidade_id=
+// GET /animais - lista com filtros (?status=, ?especie_id=, ?cidade_id=, ?busca=),
+// ordenação (?ordenar=nome|idade|criado_em, ?direcao=asc|desc) e paginação (?page=, ?limit=)
 router.get('/', asyncHandler(async (req, res) => {
-  const { status, especie_id, cidade_id } = req.query;
+  const { status, especie_id, cidade_id, busca, ordenar, direcao, page, limit } = req.query;
   if (status && !STATUS_VALIDOS.includes(status)) {
     return res.status(400).json({ erro: `status inválido, use: ${STATUS_VALIDOS.join(', ')}` });
+  }
+  if (ordenar && !ORDENACOES_VALIDAS[ordenar]) {
+    return res.status(400).json({ erro: `ordenar inválido, use: ${Object.keys(ORDENACOES_VALIDAS).join(', ')}` });
+  }
+  if (direcao && !['asc', 'desc'].includes(direcao)) {
+    return res.status(400).json({ erro: 'direcao inválida, use: asc, desc' });
   }
 
   const condicoes = [];
@@ -82,11 +94,38 @@ router.get('/', asyncHandler(async (req, res) => {
     condicoes.push('a.cidade_id = ?');
     params.push(cidade_id);
   }
+  if (busca) {
+    condicoes.push('a.nome LIKE ?');
+    params.push(`%${busca}%`);
+  }
+  const where = condicoes.length ? ` WHERE ${condicoes.join(' AND ')}` : '';
 
-  const sql = `${SELECT_ANIMAIS}${condicoes.length ? ` WHERE ${condicoes.join(' AND ')}` : ''} ORDER BY a.id DESC`;
+  let ordem = 'a.id DESC';
+  if (ordenar) {
+    const coluna = ORDENACOES_VALIDAS[ordenar];
+    // idade cresce quando data_nascimento é mais antiga, então a direção é invertida
+    // em relação à data (asc por idade = desc por data_nascimento)
+    const dir = ordenar === 'idade' ? (direcao === 'desc' ? 'ASC' : 'DESC') : (direcao === 'desc' ? 'DESC' : 'ASC');
+    ordem = `${coluna} ${dir}`;
+  }
 
-  const [rows] = await pool.query(sql, params);
-  res.json(rows);
+  const limiteNum = Math.min(Math.max(parseInt(limit, 10) || LIMITE_PADRAO, 1), LIMITE_MAXIMO);
+  const paginaNum = Math.max(parseInt(page, 10) || 1, 1);
+  const offset = (paginaNum - 1) * limiteNum;
+
+  const [totalRows] = await pool.query(`SELECT COUNT(*) AS total FROM animais a${where}`, params);
+  const total = totalRows[0].total;
+
+  const sql = `${SELECT_ANIMAIS}${where} ORDER BY ${ordem} LIMIT ? OFFSET ?`;
+  const [rows] = await pool.query(sql, [...params, limiteNum, offset]);
+
+  res.json({
+    dados: rows,
+    total,
+    pagina: paginaNum,
+    totalPaginas: Math.max(Math.ceil(total / limiteNum), 1),
+    limite: limiteNum,
+  });
 }));
 
 // GET /animais/:id - detalhe de um animal
@@ -100,7 +139,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 // POST /animais - cria um animal
 router.post('/', asyncHandler(async (req, res) => {
-  const { nome, especie_id, raca_id, data_nascimento, cidade_id } = req.body;
+  const { nome, especie_id, raca_id, data_nascimento, cidade_id, foto_url } = req.body;
   if (!nomeValido(nome, 100) || !especie_id) {
     return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), especie_id' });
   }
@@ -119,10 +158,13 @@ router.post('/', asyncHandler(async (req, res) => {
   if (cidade_id && !(await cidadeExiste(cidade_id))) {
     return res.status(404).json({ erro: 'Cidade não encontrada' });
   }
+  if (foto_url && !urlValida(foto_url, 500)) {
+    return res.status(400).json({ erro: 'foto_url inválida (use uma URL http/https válida)' });
+  }
 
   const [result] = await pool.query(
-    'INSERT INTO animais (nome, especie_id, raca_id, data_nascimento, cidade_id) VALUES (?, ?, ?, ?, ?)',
-    [nome.trim(), especie_id, raca_id || null, data_nascimento || null, cidade_id || null]
+    'INSERT INTO animais (nome, especie_id, raca_id, data_nascimento, cidade_id, foto_url) VALUES (?, ?, ?, ?, ?, ?)',
+    [nome.trim(), especie_id, raca_id || null, data_nascimento || null, cidade_id || null, foto_url?.trim() || null]
   );
   const [rows] = await pool.query(`${SELECT_ANIMAIS} WHERE a.id = ?`, [result.insertId]);
   res.status(201).json(rows[0]);
@@ -130,7 +172,7 @@ router.post('/', asyncHandler(async (req, res) => {
 
 // PUT /animais/:id - atualiza um animal
 router.put('/:id', asyncHandler(async (req, res) => {
-  const { nome, especie_id, raca_id, data_nascimento, cidade_id } = req.body;
+  const { nome, especie_id, raca_id, data_nascimento, cidade_id, foto_url } = req.body;
   if (!nomeValido(nome, 100) || !especie_id) {
     return res.status(400).json({ erro: 'Campos obrigatórios: nome (máx. 100 caracteres), especie_id' });
   }
@@ -148,6 +190,9 @@ router.put('/:id', asyncHandler(async (req, res) => {
   }
   if (cidade_id && !(await cidadeExiste(cidade_id))) {
     return res.status(404).json({ erro: 'Cidade não encontrada' });
+  }
+  if (foto_url && !urlValida(foto_url, 500)) {
+    return res.status(400).json({ erro: 'foto_url inválida (use uma URL http/https válida)' });
   }
 
   const [existente] = await pool.query('SELECT id FROM animais WHERE id = ?', [req.params.id]);
@@ -156,8 +201,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
   }
 
   await pool.query(
-    'UPDATE animais SET nome = ?, especie_id = ?, raca_id = ?, data_nascimento = ?, cidade_id = ? WHERE id = ?',
-    [nome.trim(), especie_id, raca_id || null, data_nascimento || null, cidade_id || null, req.params.id]
+    'UPDATE animais SET nome = ?, especie_id = ?, raca_id = ?, data_nascimento = ?, cidade_id = ?, foto_url = ? WHERE id = ?',
+    [nome.trim(), especie_id, raca_id || null, data_nascimento || null, cidade_id || null, foto_url?.trim() || null, req.params.id]
   );
   const [rows] = await pool.query(`${SELECT_ANIMAIS} WHERE a.id = ?`, [req.params.id]);
   res.json(rows[0]);

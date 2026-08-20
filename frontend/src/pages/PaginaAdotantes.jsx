@@ -5,6 +5,7 @@ import { formatarCPF, formatarTelefone } from '../utils';
 import { useNotificacao } from '../components/Notificacoes';
 import { useConfirm } from '../components/ConfirmDialog';
 import SeletorCidade from '../components/SeletorCidade';
+import Paginacao from '../components/Paginacao';
 
 const VAZIO = { nome: '', cpf: '', telefone: '', email: '', cidade_id: '' };
 
@@ -17,11 +18,20 @@ export default function PaginaAdotantes() {
   const [adotanteEditando, setAdotanteEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
   const [formInicial, setFormInicial] = useState(VAZIO);
+  const [busca, setBusca] = useState('');
+  const [buscaDebounced, setBuscaDebounced] = useState('');
+  const [ordenar, setOrdenar] = useState('criado_em');
+  const [direcao, setDirecao] = useState('desc');
+  const [pagina, setPagina] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(1);
 
   async function carregar() {
     try {
-      const dados = await api.listarAdotantes();
-      setAdotantes(dados);
+      const resultado = await api.listarAdotantes({ busca: buscaDebounced, ordenar, direcao, page: pagina });
+      setAdotantes(resultado.dados);
+      setTotal(resultado.total);
+      setTotalPaginas(resultado.totalPaginas);
     } catch (e) {
       notificar('erro', e.message);
     }
@@ -37,7 +47,19 @@ export default function PaginaAdotantes() {
   }
 
   useEffect(() => {
+    const timer = setTimeout(() => setBuscaDebounced(busca), 400);
+    return () => clearTimeout(timer);
+  }, [busca]);
+
+  useEffect(() => {
+    setPagina(1);
+  }, [buscaDebounced, ordenar, direcao]);
+
+  useEffect(() => {
     carregar();
+  }, [buscaDebounced, ordenar, direcao, pagina]);
+
+  useEffect(() => {
     carregarCidades();
   }, []);
 
@@ -112,7 +134,11 @@ export default function PaginaAdotantes() {
       setForm(VAZIO);
       setMostrarForm(false);
       setAdotanteEditando(null);
-      await carregar();
+      if (!adotanteEditando && pagina !== 1) {
+        setPagina(1);
+      } else {
+        await carregar();
+      }
     } catch (e) {
       notificar('erro', e.message);
     }
@@ -187,56 +213,94 @@ export default function PaginaAdotantes() {
 
       {!mostrarForm && (
         <>
+          <div className="filtros">
+            <label>
+              Buscar por nome:
+              <input
+                type="text"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Digite o nome do adotante..."
+              />
+            </label>
+            <label>
+              Ordenar por:
+              <select value={ordenar} onChange={(e) => setOrdenar(e.target.value)}>
+                <option value="nome">Nome</option>
+                <option value="criado_em">Data de cadastro</option>
+              </select>
+            </label>
+            <label>
+              Direção:
+              <select value={direcao} onChange={(e) => setDirecao(e.target.value)}>
+                <option value="asc">Crescente</option>
+                <option value="desc">Decrescente</option>
+              </select>
+            </label>
+          </div>
+
           {adotantes.length === 0 && (
             <div className="empty-state">
               <span className="empty-emoji">🧑‍🤝‍🧑</span>
-              Nenhum adotante cadastrado ainda.
+              {busca ? `Nenhum adotante encontrado para "${busca}".` : 'Nenhum adotante cadastrado ainda.'}
             </div>
           )}
 
           {adotantes.length > 0 && (
-            <table className="tabela-animais">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>CPF</th>
-                  <th>Telefone</th>
-                  <th>E-mail</th>
-                  <th>Cidade</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adotantes.map((a) => (
-                  <tr key={a.id}>
-                    <td>{a.nome}</td>
-                    <td>{formatarCPF(a.cpf)}</td>
-                    <td>{a.telefone ? formatarTelefone(a.telefone) : '-'}</td>
-                    <td>{a.email || '-'}</td>
-                    <td>{a.cidade_nome ? `${a.cidade_nome}/${a.cidade_estado}` : '-'}</td>
-                    <td className="acoes">
-                      <button
-                        className="btn-icone"
-                        title="Editar"
-                        aria-label={`Editar ${a.nome}`}
-                        onClick={() => abrirEditar(a)}
-                      >
-                        <IconeEditar />
-                      </button>
-                      <button
-                        className="btn-icone btn-perigo"
-                        title="Excluir"
-                        aria-label={`Excluir ${a.nome}`}
-                        onClick={() => handleExcluir(a)}
-                      >
-                        <IconeExcluir />
-                      </button>
-                    </td>
+            <div className="tabela-wrap">
+              <table className="tabela-animais tabela-adotantes">
+                <colgroup>
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '13%' }} />
+                  <col style={{ width: '15%' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Telefone</th>
+                    <th>E-mail</th>
+                    <th>Cidade</th>
+                    <th>Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {adotantes.map((a) => (
+                    <tr key={a.id}>
+                      <td className="truncate" title={a.nome}>{a.nome}</td>
+                      <td className="whitespace-nowrap">{formatarCPF(a.cpf)}</td>
+                      <td className="whitespace-nowrap">{a.telefone ? formatarTelefone(a.telefone) : '-'}</td>
+                      <td className="truncate" title={a.email || ''}>{a.email || '-'}</td>
+                      <td className="truncate">{a.cidade_nome ? `${a.cidade_nome}/${a.cidade_estado}` : '-'}</td>
+                      <td className="acoes">
+                        <button
+                          className="btn-icone"
+                          title="Editar"
+                          aria-label={`Editar ${a.nome}`}
+                          onClick={() => abrirEditar(a)}
+                        >
+                          <IconeEditar />
+                        </button>
+                        <button
+                          className="btn-icone btn-perigo"
+                          title="Excluir"
+                          aria-label={`Excluir ${a.nome}`}
+                          onClick={() => handleExcluir(a)}
+                        >
+                          <IconeExcluir />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
+
+          <Paginacao pagina={pagina} totalPaginas={totalPaginas} total={total} onMudarPagina={setPagina} />
         </>
       )}
     </div>

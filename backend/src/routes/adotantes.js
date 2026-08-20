@@ -5,6 +5,10 @@ const { somenteDigitos, validarCamposAdotante } = require('../utils/validadores'
 
 const router = express.Router();
 
+const ORDENACOES_VALIDAS = { nome: 'ad.nome', criado_em: 'ad.criado_em' };
+const LIMITE_PADRAO = 15;
+const LIMITE_MAXIMO = 100;
+
 const SELECT_ADOTANTES = `
   SELECT
     ad.*,
@@ -19,10 +23,44 @@ async function cidadeExiste(cidade_id) {
   return rows.length > 0;
 }
 
-// GET /adotantes - lista todos os adotantes
+// GET /adotantes - lista com busca (?busca=), ordenação (?ordenar=nome|criado_em, ?direcao=asc|desc)
+// e paginação (?page=, ?limit=)
 router.get('/', asyncHandler(async (req, res) => {
-  const [rows] = await pool.query(`${SELECT_ADOTANTES} ORDER BY ad.id DESC`);
-  res.json(rows);
+  const { busca, ordenar, direcao, page, limit } = req.query;
+  if (ordenar && !ORDENACOES_VALIDAS[ordenar]) {
+    return res.status(400).json({ erro: `ordenar inválido, use: ${Object.keys(ORDENACOES_VALIDAS).join(', ')}` });
+  }
+  if (direcao && !['asc', 'desc'].includes(direcao)) {
+    return res.status(400).json({ erro: 'direcao inválida, use: asc, desc' });
+  }
+
+  const condicoes = [];
+  const params = [];
+  if (busca) {
+    condicoes.push('ad.nome LIKE ?');
+    params.push(`%${busca}%`);
+  }
+  const where = condicoes.length ? ` WHERE ${condicoes.join(' AND ')}` : '';
+
+  const ordem = ordenar ? `${ORDENACOES_VALIDAS[ordenar]} ${direcao === 'desc' ? 'DESC' : 'ASC'}` : 'ad.id DESC';
+
+  const limiteNum = Math.min(Math.max(parseInt(limit, 10) || LIMITE_PADRAO, 1), LIMITE_MAXIMO);
+  const paginaNum = Math.max(parseInt(page, 10) || 1, 1);
+  const offset = (paginaNum - 1) * limiteNum;
+
+  const [totalRows] = await pool.query(`SELECT COUNT(*) AS total FROM adotantes ad${where}`, params);
+  const total = totalRows[0].total;
+
+  const sql = `${SELECT_ADOTANTES}${where} ORDER BY ${ordem} LIMIT ? OFFSET ?`;
+  const [rows] = await pool.query(sql, [...params, limiteNum, offset]);
+
+  res.json({
+    dados: rows,
+    total,
+    pagina: paginaNum,
+    totalPaginas: Math.max(Math.ceil(total / limiteNum), 1),
+    limite: limiteNum,
+  });
 }));
 
 // GET /adotantes/:id - detalhe de um adotante

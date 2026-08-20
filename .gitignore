@@ -2,6 +2,7 @@ node_modules/
 .env
 dist/
 *.log
+backend/uploads/
 
 # Playwright
 /test-results/

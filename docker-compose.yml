@@ -56,6 +56,9 @@ services:
       DB_NAME: ${DB_NAME}
     ports:
       - "3001:3001"
+    # Persiste as fotos enviadas por upload fora do ciclo de vida do container
+    volumes:
+      - backend_uploads:/app/uploads
     # Só inicia o backend depois que o mariadb passar no healthcheck acima,
     # evitando erro de conexão durante a subida do ambiente
     depends_on:
@@ -79,3 +82,4 @@ services:
 # Declaração dos volumes nomeados usados acima (o Docker gerencia onde ficam no host)
 volumes:
   mariadb_data:
+  backend_uploads:

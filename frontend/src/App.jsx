@@ -6,6 +6,7 @@ import { useConfirm } from './components/ConfirmDialog';
 import ListaAnimais from './pages/ListaAnimais';
 import FormAnimal from './pages/FormAnimal';
 import FormAdotante from './pages/FormAdotante';
+import DetalheAnimal from './pages/DetalheAnimal';
 import PaginaAdotantes from './pages/PaginaAdotantes';
 import PaginaCidades from './pages/PaginaCidades';
 import PaginaEspecies from './pages/PaginaEspecies';
@@ -15,6 +16,7 @@ const VIEWS = {
   LISTA: 'lista',
   FORM_ANIMAL: 'form_animal',
   FORM_ADOTAR: 'form_adotar',
+  DETALHE_ANIMAL: 'detalhe_animal',
 };
 
 export default function App() {
@@ -30,16 +32,38 @@ export default function App() {
   const [filtroStatus, setFiltroStatus] = useState('');
   const [filtroEspecie, setFiltroEspecie] = useState('');
   const [filtroCidade, setFiltroCidade] = useState('');
+  const [busca, setBusca] = useState('');
+  const [buscaDebounced, setBuscaDebounced] = useState('');
+  const [ordenar, setOrdenar] = useState('criado_em');
+  const [direcao, setDirecao] = useState('desc');
+  const [paginaAnimais, setPaginaAnimais] = useState(1);
+  const [totalAnimais, setTotalAnimais] = useState(0);
+  const [totalPaginasAnimais, setTotalPaginasAnimais] = useState(1);
   const [animalSelecionado, setAnimalSelecionado] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBuscaDebounced(busca), 400);
+    return () => clearTimeout(timer);
+  }, [busca]);
+
+  useEffect(() => {
+    setPaginaAnimais(1);
+  }, [filtroStatus, filtroEspecie, filtroCidade, buscaDebounced, ordenar, direcao]);
 
   async function carregarAnimais() {
     try {
-      const dados = await api.listarAnimais({
+      const resultado = await api.listarAnimais({
         status: filtroStatus,
         especie_id: filtroEspecie,
         cidade_id: filtroCidade,
+        busca: buscaDebounced,
+        ordenar,
+        direcao,
+        page: paginaAnimais,
       });
-      setAnimais(dados);
+      setAnimais(resultado.dados);
+      setTotalAnimais(resultado.total);
+      setTotalPaginasAnimais(resultado.totalPaginas);
     } catch (e) {
       notificar('erro', e.message);
     }
@@ -47,8 +71,8 @@ export default function App() {
 
   async function carregarAdotantes() {
     try {
-      const dados = await api.listarAdotantes();
-      setAdotantes(dados);
+      const resultado = await api.listarAdotantes({ limit: 100 });
+      setAdotantes(resultado.dados);
     } catch (e) {
       notificar('erro', e.message);
     }
@@ -83,7 +107,7 @@ export default function App() {
 
   useEffect(() => {
     carregarAnimais();
-  }, [filtroStatus, filtroEspecie, filtroCidade]);
+  }, [filtroStatus, filtroEspecie, filtroCidade, buscaDebounced, ordenar, direcao, paginaAnimais]);
 
   useEffect(() => {
     carregarAdotantes();
@@ -115,17 +139,28 @@ export default function App() {
     setView(VIEWS.FORM_ADOTAR);
   }
 
+  function abrirDetalheAnimal(animal) {
+    setAnimalSelecionado(animal);
+    setView(VIEWS.DETALHE_ANIMAL);
+  }
+
   async function salvarAnimal(dados) {
     try {
       if (animalSelecionado) {
         await api.atualizarAnimal(animalSelecionado.id, dados);
         notificar('sucesso', 'Animal atualizado com sucesso!');
+        setView(VIEWS.LISTA);
+        await carregarAnimais();
       } else {
         await api.criarAnimal(dados);
         notificar('sucesso', 'Animal cadastrado com sucesso!');
+        setView(VIEWS.LISTA);
+        if (paginaAnimais === 1) {
+          await carregarAnimais();
+        } else {
+          setPaginaAnimais(1);
+        }
       }
-      setView(VIEWS.LISTA);
-      await carregarAnimais();
     } catch (e) {
       notificar('erro', e.message);
     }
@@ -190,11 +225,31 @@ export default function App() {
                 onFiltroEspecieChange={setFiltroEspecie}
                 filtroCidade={filtroCidade}
                 onFiltroCidadeChange={setFiltroCidade}
+                busca={busca}
+                onBuscaChange={setBusca}
+                ordenar={ordenar}
+                onOrdenarChange={setOrdenar}
+                direcao={direcao}
+                onDirecaoChange={setDirecao}
+                pagina={paginaAnimais}
+                totalPaginas={totalPaginasAnimais}
+                total={totalAnimais}
+                onMudarPagina={setPaginaAnimais}
                 onEditar={abrirEditarAnimal}
                 onExcluir={excluirAnimal}
                 onAdotar={abrirAdotar}
+                onVerDetalhe={abrirDetalheAnimal}
               />
             </>
+          )}
+
+          {view === VIEWS.DETALHE_ANIMAL && (
+            <DetalheAnimal
+              animal={animalSelecionado}
+              onEditar={abrirEditarAnimal}
+              onAdotar={abrirAdotar}
+              onVoltar={() => setView(VIEWS.LISTA)}
+            />
           )}
 
           {view === VIEWS.FORM_ANIMAL && (

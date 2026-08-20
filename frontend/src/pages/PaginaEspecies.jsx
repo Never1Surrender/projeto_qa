@@ -131,39 +131,45 @@ export default function PaginaEspecies() {
           )}
 
           {especies.length > 0 && (
-            <table className="tabela-animais">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {especies.map((e) => (
-                  <tr key={e.id}>
-                    <td>{e.nome}</td>
-                    <td className="acoes">
-                      <button
-                        className="btn-icone"
-                        title="Editar"
-                        aria-label={`Editar ${e.nome}`}
-                        onClick={() => abrirEditar(e)}
-                      >
-                        <IconeEditar />
-                      </button>
-                      <button
-                        className="btn-icone btn-perigo"
-                        title="Excluir"
-                        aria-label={`Excluir ${e.nome}`}
-                        onClick={() => handleExcluir(e)}
-                      >
-                        <IconeExcluir />
-                      </button>
-                    </td>
+            <div className="tabela-wrap">
+              <table className="tabela-animais">
+                <colgroup>
+                  <col />
+                  <col style={{ width: '120px' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th className="centro">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {especies.map((e) => (
+                    <tr key={e.id}>
+                      <td>{e.nome}</td>
+                      <td className="acoes">
+                        <button
+                          className="btn-icone"
+                          title="Editar"
+                          aria-label={`Editar ${e.nome}`}
+                          onClick={() => abrirEditar(e)}
+                        >
+                          <IconeEditar />
+                        </button>
+                        <button
+                          className="btn-icone btn-perigo"
+                          title="Excluir"
+                          aria-label={`Excluir ${e.nome}`}
+                          onClick={() => handleExcluir(e)}
+                        >
+                          <IconeExcluir />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

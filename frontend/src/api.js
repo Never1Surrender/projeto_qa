@@ -19,12 +19,29 @@ async function request(path, options = {}) {
   return data;
 }
 
+async function uploadFoto(arquivo) {
+  const formData = new FormData();
+  formData.append('foto', arquivo);
+  const res = await fetch(`${API_URL}/uploads`, { method: 'POST', body: formData });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.erro || `Erro ${res.status}`);
+  }
+  return data;
+}
+
 export const api = {
+  uploadFoto,
   listarAnimais: (filtros = {}) => {
     const params = new URLSearchParams();
     if (filtros.status) params.set('status', filtros.status);
     if (filtros.especie_id) params.set('especie_id', filtros.especie_id);
     if (filtros.cidade_id) params.set('cidade_id', filtros.cidade_id);
+    if (filtros.busca) params.set('busca', filtros.busca);
+    if (filtros.ordenar) params.set('ordenar', filtros.ordenar);
+    if (filtros.direcao) params.set('direcao', filtros.direcao);
+    if (filtros.page) params.set('page', filtros.page);
+    if (filtros.limit) params.set('limit', filtros.limit);
     const query = params.toString();
     return request(`/animais${query ? `?${query}` : ''}`);
   },
@@ -36,7 +53,16 @@ export const api = {
   adotarAnimal: (id, dadosAdocao) =>
     request(`/animais/${id}/adotar`, { method: 'POST', body: JSON.stringify(dadosAdocao) }),
 
-  listarAdotantes: () => request('/adotantes'),
+  listarAdotantes: (filtros = {}) => {
+    const params = new URLSearchParams();
+    if (filtros.busca) params.set('busca', filtros.busca);
+    if (filtros.ordenar) params.set('ordenar', filtros.ordenar);
+    if (filtros.direcao) params.set('direcao', filtros.direcao);
+    if (filtros.page) params.set('page', filtros.page);
+    if (filtros.limit) params.set('limit', filtros.limit);
+    const query = params.toString();
+    return request(`/adotantes${query ? `?${query}` : ''}`);
+  },
   criarAdotante: (adotante) =>
     request('/adotantes', { method: 'POST', body: JSON.stringify(adotante) }),
   atualizarAdotante: (id, adotante) =>

@@ -157,41 +157,48 @@ export default function PaginaRacas() {
           )}
 
           {racas.length > 0 && (
-            <table className="tabela-animais">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Espécie</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {racas.map((r) => (
-                  <tr key={r.id}>
-                    <td>{r.nome}</td>
-                    <td>{r.especie_nome}</td>
-                    <td className="acoes">
-                      <button
-                        className="btn-icone"
-                        title="Editar"
-                        aria-label={`Editar ${r.nome}`}
-                        onClick={() => abrirEditar(r)}
-                      >
-                        <IconeEditar />
-                      </button>
-                      <button
-                        className="btn-icone btn-perigo"
-                        title="Excluir"
-                        aria-label={`Excluir ${r.nome}`}
-                        onClick={() => handleExcluir(r)}
-                      >
-                        <IconeExcluir />
-                      </button>
-                    </td>
+            <div className="tabela-wrap">
+              <table className="tabela-animais">
+                <colgroup>
+                  <col />
+                  <col style={{ width: '200px' }} />
+                  <col style={{ width: '120px' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Espécie</th>
+                    <th className="centro">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {racas.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.nome}</td>
+                      <td>{r.especie_nome}</td>
+                      <td className="acoes">
+                        <button
+                          className="btn-icone"
+                          title="Editar"
+                          aria-label={`Editar ${r.nome}`}
+                          onClick={() => abrirEditar(r)}
+                        >
+                          <IconeEditar />
+                        </button>
+                        <button
+                          className="btn-icone btn-perigo"
+                          title="Excluir"
+                          aria-label={`Excluir ${r.nome}`}
+                          onClick={() => handleExcluir(r)}
+                        >
+                          <IconeExcluir />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

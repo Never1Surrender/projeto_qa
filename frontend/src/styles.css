@@ -64,6 +64,34 @@
     @apply rounded-sm border-[1.5px] border-line px-2.5 py-1.5 text-sm font-semibold bg-white text-ink normal-case tracking-normal;
   }
 
+  .chips-filtro {
+    @apply flex flex-wrap items-center gap-2 mb-4;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 bg-primary-light text-primary-dark text-xs font-bold px-3 py-1.5 rounded-full;
+  }
+
+  .chip button {
+    @apply p-0 w-4 h-4 min-w-0 border-none bg-transparent text-primary-dark font-extrabold leading-none flex items-center justify-center;
+  }
+
+  .chip-limpar {
+    @apply text-xs font-bold text-ink-muted underline underline-offset-2 hover:text-primary-dark bg-transparent border-none px-1 py-0;
+  }
+
+  .paginacao {
+    @apply flex items-center justify-between flex-wrap gap-3 mt-5 bg-white border border-line px-5 py-3.5 rounded-md shadow-sm;
+  }
+
+  .paginacao-info {
+    @apply text-sm font-semibold text-ink-muted;
+  }
+
+  .paginacao-botoes {
+    @apply flex gap-2;
+  }
+
   .empty-state {
     @apply text-center py-12 px-6 text-ink-muted bg-white border-2 border-dashed border-line rounded-lg font-semibold;
   }
@@ -72,13 +100,25 @@
     @apply block text-4xl mb-2;
   }
 
+  .tabela-wrap {
+    @apply w-full overflow-x-auto rounded-lg shadow-sm border border-line;
+  }
+
   .tabela-animais {
-    @apply w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm border border-line;
+    @apply w-full border-collapse bg-white;
+  }
+
+  .tabela-adotantes {
+    @apply table-fixed;
+  }
+
+  .tabela-adotantes th {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
   }
 
   .tabela-animais th,
   .tabela-animais td {
-    @apply text-left px-4 py-3 border-b border-line;
+    @apply text-left px-4 py-3 border-b border-line text-xs;
   }
 
   .tabela-animais th {
@@ -110,11 +150,16 @@
   }
 
   .acoes {
-    @apply flex items-center gap-1.5;
+    @apply flex items-center justify-center gap-1.5;
+  }
+
+  .tabela-animais th.centro,
+  .tabela-animais td.centro {
+    @apply text-center;
   }
 
   .form-card {
-    @apply bg-white p-6 rounded-lg max-w-md flex flex-col gap-3.5 shadow-md border border-line;
+    @apply bg-white p-6 rounded-lg max-w-md mx-auto flex flex-col gap-3.5 shadow-md border border-line;
   }
 
   .form-card h2 {
@@ -133,6 +178,26 @@
   .form-card input:disabled,
   .form-card select:disabled {
     @apply opacity-55 cursor-not-allowed;
+  }
+
+  .campo-foto {
+    @apply flex items-center gap-3 normal-case;
+  }
+
+  .campo-foto-preview {
+    @apply w-16 h-16 shrink-0 rounded-md overflow-hidden border border-line;
+  }
+
+  .campo-foto-preview img {
+    @apply w-full h-full object-cover;
+  }
+
+  .campo-foto-acoes {
+    @apply flex gap-2;
+  }
+
+  .campo-foto-acoes button {
+    @apply text-sm normal-case tracking-normal font-bold;
   }
 
   .form-card input:focus,
@@ -196,5 +261,53 @@
 
   .btn-icone.btn-perigo:hover {
     @apply bg-danger-dark border-danger-dark;
+  }
+
+  .btn-voltar {
+    @apply bg-transparent border-none px-0 text-ink-muted font-bold text-sm mb-4;
+  }
+
+  .btn-voltar:hover {
+    @apply text-primary-dark;
+  }
+
+  .detalhe-animal-card {
+    @apply bg-white rounded-lg shadow-md border border-line p-6 flex flex-col sm:flex-row gap-6;
+  }
+
+  .detalhe-animal-foto {
+    @apply w-full sm:w-48 h-48 shrink-0 rounded-lg bg-gradient-to-br from-primary-light to-secondary-light flex items-center justify-center overflow-hidden;
+  }
+
+  .detalhe-animal-foto img {
+    @apply w-full h-full object-cover;
+  }
+
+  .detalhe-animal-emoji {
+    @apply text-6xl;
+  }
+
+  .detalhe-animal-info {
+    @apply flex-1 flex flex-col gap-4 min-w-0;
+  }
+
+  .detalhe-lista {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3;
+  }
+
+  .detalhe-lista dt {
+    @apply text-xs font-bold text-ink-muted uppercase tracking-wide;
+  }
+
+  .detalhe-lista dd {
+    @apply m-0 text-base font-semibold text-ink;
+  }
+
+  .card-foto {
+    @apply w-12 h-12 shrink-0 rounded-full overflow-hidden;
+  }
+
+  .card-foto img {
+    @apply w-full h-full object-cover;
   }
 }

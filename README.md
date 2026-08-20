@@ -54,13 +54,13 @@ Frontend sobe em `http://localhost:5173`.
 
 | Método | Rota                    | Descrição                              |
 |--------|--------------------------|-----------------------------------------|
-| GET    | `/animais`                | Lista animais (filtros `?status=`, `?especie_id=`, `?cidade_id=`) |
+| GET    | `/animais`                | Lista animais, paginada (filtros `?status=`, `?especie_id=`, `?cidade_id=`, `?busca=`; ordenação `?ordenar=nome\|idade\|criado_em`, `?direcao=asc\|desc`; paginação `?page=`, `?limit=`) |
 | GET    | `/animais/:id`             | Detalhe de um animal                   |
 | POST   | `/animais`                 | Cria um animal                         |
 | PUT    | `/animais/:id`              | Atualiza um animal                     |
 | DELETE | `/animais/:id`              | Remove um animal                       |
 | POST   | `/animais/:id/adotar`         | Marca animal como adotado              |
-| GET    | `/adotantes`               | Lista adotantes                        |
+| GET    | `/adotantes`               | Lista adotantes, paginada (`?busca=`, `?ordenar=nome\|criado_em`, `?direcao=asc\|desc`, `?page=`, `?limit=`) |
 | GET    | `/adotantes/:id`            | Detalhe de um adotante                 |
 | POST   | `/adotantes`                | Cria um adotante                       |
 | PUT    | `/adotantes/:id`             | Atualiza um adotante                   |
@@ -78,6 +78,9 @@ Frontend sobe em `http://localhost:5173`.
 | PUT    | `/racas/:id`                 | Atualiza uma raça                      |
 | DELETE | `/racas/:id`                 | Remove uma raça                        |
 
+`GET /animais` e `GET /adotantes` retornam um objeto paginado, não um array puro:
+`{ dados: [...], total, pagina, totalPaginas, limite }`. Limite padrão: 12 (animais) / 15 (adotantes), máximo 100.
+
 ### Campos de `animais`
 
 - `nome`: obrigatório, máx. 100 caracteres
@@ -85,6 +88,7 @@ Frontend sobe em `http://localhost:5173`.
 - `raca_id`: opcional, referencia uma raça cadastrada — precisa pertencer à `especie_id` informada (senão retorna 400)
 - `data_nascimento`: data (opcional). Não pode ser futura nem anterior a 30 anos atrás. A API retorna também um campo `idade` calculado automaticamente a partir dela (em anos).
 - `cidade_id`: opcional, referencia uma cidade cadastrada (FK com `ON DELETE SET NULL`)
+- `foto_url`: opcional, URL (`http`/`https`) da foto do animal, máx. 500 caracteres
 
 ### Campos de `adotantes`
 

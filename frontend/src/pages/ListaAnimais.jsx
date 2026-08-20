@@ -1,5 +1,6 @@
 import { IconeEditar, IconeExcluir } from '../components/Icones';
 import Combobox from '../components/Combobox';
+import Paginacao from '../components/Paginacao';
 
 const STATUS_INFO = {
   disponivel: { rotulo: 'Disponível', icone: '💚' },
@@ -16,6 +17,9 @@ const ESPECIE_EMOJI = {
   Outro: '🐾',
 };
 
+const STATUS_ROTULO = { disponivel: 'Disponível', adotado: 'Adotado' };
+const ORDENACAO_ROTULO = { nome: 'Nome', idade: 'Idade', criado_em: 'Data de cadastro' };
+
 export default function ListaAnimais({
   animais,
   cidades,
@@ -26,13 +30,55 @@ export default function ListaAnimais({
   onFiltroEspecieChange,
   filtroCidade,
   onFiltroCidadeChange,
+  busca,
+  onBuscaChange,
+  ordenar,
+  onOrdenarChange,
+  direcao,
+  onDirecaoChange,
+  pagina,
+  totalPaginas,
+  total,
+  onMudarPagina,
   onEditar,
   onExcluir,
   onAdotar,
+  onVerDetalhe,
 }) {
+  const especieSelecionada = especies.find((esp) => String(esp.id) === String(filtroEspecie));
+  const cidadeSelecionada = cidades.find((c) => String(c.id) === String(filtroCidade));
+
+  const filtrosAtivos = [
+    filtroStatus && { chave: 'status', rotulo: STATUS_ROTULO[filtroStatus], limpar: () => onFiltroStatusChange('') },
+    filtroEspecie && { chave: 'especie', rotulo: especieSelecionada?.nome, limpar: () => onFiltroEspecieChange('') },
+    filtroCidade && {
+      chave: 'cidade',
+      rotulo: cidadeSelecionada ? `${cidadeSelecionada.nome}/${cidadeSelecionada.estado}` : '',
+      limpar: () => onFiltroCidadeChange(''),
+    },
+    busca && { chave: 'busca', rotulo: `"${busca}"`, limpar: () => onBuscaChange('') },
+  ].filter(Boolean);
+
+  function limparTudo() {
+    onFiltroStatusChange('');
+    onFiltroEspecieChange('');
+    onFiltroCidadeChange('');
+    onBuscaChange('');
+  }
+
   return (
     <div>
       <div className="filtros">
+        <label>
+          Buscar por nome:
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => onBuscaChange(e.target.value)}
+            placeholder="Digite o nome do animal..."
+          />
+        </label>
+
         <label>
           Filtrar por status:
           <select value={filtroStatus} onChange={(e) => onFiltroStatusChange(e.target.value)}>
@@ -64,7 +110,42 @@ export default function ListaAnimais({
             placeholder="Digite ou selecione..."
           />
         </label>
+
+        <label>
+          Ordenar por:
+          <select value={ordenar} onChange={(e) => onOrdenarChange(e.target.value)}>
+            {Object.entries(ORDENACAO_ROTULO).map(([valor, rotulo]) => (
+              <option key={valor} value={valor}>
+                {rotulo}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Direção:
+          <select value={direcao} onChange={(e) => onDirecaoChange(e.target.value)}>
+            <option value="asc">Crescente</option>
+            <option value="desc">Decrescente</option>
+          </select>
+        </label>
       </div>
+
+      {filtrosAtivos.length > 0 && (
+        <div className="chips-filtro">
+          {filtrosAtivos.map((filtro) => (
+            <span className="chip" key={filtro.chave}>
+              {filtro.rotulo}
+              <button type="button" aria-label={`Remover filtro ${filtro.rotulo}`} onClick={filtro.limpar}>
+                ×
+              </button>
+            </span>
+          ))}
+          <button type="button" className="chip-limpar" onClick={limparTudo}>
+            Limpar todos
+          </button>
+        </div>
+      )}
 
       {animais.length === 0 && (
         <div className="empty-state">
@@ -80,31 +161,44 @@ export default function ListaAnimais({
               key={animal.id}
               className="group bg-white rounded-lg border border-line shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col items-center text-center gap-4"
             >
-              <div className="min-w-0 w-full">
-                <div className="font-extrabold text-lg text-ink leading-tight truncate" title={animal.nome}>
-                  {animal.nome}
+              <button
+                type="button"
+                className="flex flex-col items-center gap-4 w-full bg-transparent border-none p-0 cursor-pointer"
+                onClick={() => onVerDetalhe(animal)}
+                aria-label={`Ver detalhes de ${animal.nome}`}
+              >
+                <div className="min-w-0 w-full">
+                  <div className="font-extrabold text-lg text-ink leading-tight truncate" title={animal.nome}>
+                    {animal.nome}
+                  </div>
+                  <div className="text-sm text-ink-muted font-semibold truncate">
+                    {animal.especie_nome}
+                    {animal.raca_nome ? ` · ${animal.raca_nome}` : ''}
+                  </div>
                 </div>
-                <div className="text-sm text-ink-muted font-semibold truncate">
-                  {animal.especie_nome}
-                  {animal.raca_nome ? ` · ${animal.raca_nome}` : ''}
+
+                {animal.foto_url ? (
+                  <span className="card-foto">
+                    <img src={animal.foto_url} alt={animal.nome} />
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-primary-light to-secondary-light text-2xl">
+                    {ESPECIE_EMOJI[animal.especie_nome] || '🐾'}
+                  </span>
+                )}
+
+                <div className="flex flex-col items-center gap-1.5 text-sm text-ink-muted font-semibold min-w-0 w-full">
+                  <span className={`badge badge-${animal.status} w-fit`}>
+                    {STATUS_INFO[animal.status]?.icone} {STATUS_INFO[animal.status]?.rotulo || animal.status}
+                  </span>
+                  <span className="min-w-0 break-words">
+                    🎂 {animal.idade != null ? `${animal.idade} ano${animal.idade === 1 ? '' : 's'}` : 'Idade não informada'}
+                  </span>
+                  <span className="min-w-0 break-words">
+                    📍 {animal.cidade_nome ? `${animal.cidade_nome}/${animal.cidade_estado}` : 'Cidade não informada'}
+                  </span>
                 </div>
-              </div>
-
-              <span className="inline-flex items-center justify-center w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-primary-light to-secondary-light text-2xl">
-                {ESPECIE_EMOJI[animal.especie_nome] || '🐾'}
-              </span>
-
-              <div className="flex flex-col items-center gap-1.5 text-sm text-ink-muted font-semibold min-w-0 w-full">
-                <span className={`badge badge-${animal.status} w-fit`}>
-                  {STATUS_INFO[animal.status]?.icone} {STATUS_INFO[animal.status]?.rotulo || animal.status}
-                </span>
-                <span className="min-w-0 break-words">
-                  🎂 {animal.idade != null ? `${animal.idade} ano${animal.idade === 1 ? '' : 's'}` : 'Idade não informada'}
-                </span>
-                <span className="min-w-0 break-words">
-                  📍 {animal.cidade_nome ? `${animal.cidade_nome}/${animal.cidade_estado}` : 'Cidade não informada'}
-                </span>
-              </div>
+              </button>
 
               <div className="flex items-center gap-2 mt-auto pt-3 border-t border-line">
                 {animal.status === 'disponivel' && (
@@ -135,6 +229,8 @@ export default function ListaAnimais({
           ))}
         </div>
       )}
+
+      <Paginacao pagina={pagina} totalPaginas={totalPaginas} total={total} onMudarPagina={onMudarPagina} />
     </div>
   );
 }
