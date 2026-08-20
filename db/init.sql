@@ -62,3 +62,17 @@ CREATE TABLE IF NOT EXISTS animais (
   CONSTRAINT fk_animal_especie FOREIGN KEY (especie_id) REFERENCES especies(id),
   CONSTRAINT fk_animal_raca FOREIGN KEY (raca_id) REFERENCES racas(id) ON DELETE SET NULL
 );
+
+-- Histórico de adoções: uma linha por adoção registrada, preservada mesmo se
+-- a adoção for encerrada depois. animal_id/adotante_id usam RESTRICT (padrão)
+-- de propósito, pra impedir excluir um animal/adotante e perder esse histórico
+-- sem querer — ver README para a checagem correspondente nas rotas DELETE.
+CREATE TABLE IF NOT EXISTS adocoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  animal_id INT NOT NULL,
+  adotante_id INT NOT NULL,
+  data_adocao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  data_devolucao TIMESTAMP NULL,
+  CONSTRAINT fk_adocao_animal FOREIGN KEY (animal_id) REFERENCES animais(id),
+  CONSTRAINT fk_adocao_adotante FOREIGN KEY (adotante_id) REFERENCES adotantes(id)
+);

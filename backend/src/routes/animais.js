@@ -209,7 +209,15 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 // DELETE /animais/:id - remove um animal
+// Bloqueado se o animal tiver histórico de adoção (tabela adocoes), pra não perder esse registro
 router.delete('/:id', asyncHandler(async (req, res) => {
+  const [historico] = await pool.query('SELECT id FROM adocoes WHERE animal_id = ?', [req.params.id]);
+  if (historico.length > 0) {
+    return res.status(409).json({
+      erro: 'Não é possível excluir: este animal tem histórico de adoção',
+    });
+  }
+
   const [result] = await pool.query('DELETE FROM animais WHERE id = ?', [req.params.id]);
   if (result.affectedRows === 0) {
     return res.status(404).json({ erro: 'Animal não encontrado' });
@@ -262,6 +270,10 @@ router.post('/:id/adotar', asyncHandler(async (req, res) => {
   await pool.query(
     "UPDATE animais SET status = 'adotado', adotante_id = ? WHERE id = ?",
     [adotanteId, req.params.id]
+  );
+  await pool.query(
+    'INSERT INTO adocoes (animal_id, adotante_id) VALUES (?, ?)',
+    [req.params.id, adotanteId]
   );
   const [rows] = await pool.query(`${SELECT_ANIMAIS} WHERE a.id = ?`, [req.params.id]);
   res.json(rows[0]);

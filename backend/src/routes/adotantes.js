@@ -137,7 +137,8 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 // DELETE /adotantes/:id - remove um adotante
-// Bloqueado se o adotante ainda tiver animais adotados vinculados (evita animal "adotado" sem dono)
+// Bloqueado se o adotante ainda tiver animais adotados vinculados, ou se tiver
+// histórico de adoção (tabela adocoes), pra não perder esse registro
 router.delete('/:id', asyncHandler(async (req, res) => {
   const [animaisVinculados] = await pool.query(
     "SELECT id FROM animais WHERE adotante_id = ? AND status = 'adotado'",
@@ -146,6 +147,13 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   if (animaisVinculados.length > 0) {
     return res.status(409).json({
       erro: 'Não é possível excluir: este adotante ainda tem animais adotados vinculados',
+    });
+  }
+
+  const [historico] = await pool.query('SELECT id FROM adocoes WHERE adotante_id = ?', [req.params.id]);
+  if (historico.length > 0) {
+    return res.status(409).json({
+      erro: 'Não é possível excluir: este adotante tem histórico de adoção',
     });
   }
 
