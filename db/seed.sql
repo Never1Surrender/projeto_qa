@@ -51,10 +51,20 @@ INSERT INTO animais (nome, especie_id, raca_id, data_nascimento, cidade_id) VALU
     (SELECT id FROM racas WHERE nome = 'Jabuti'),
     '2019-04-25', (SELECT id FROM cidades WHERE nome = 'Porto Alegre'));
 
--- Marca 3 animais como já adotados, vinculando a adotantes acima
+-- Marca 3 animais como já adotados, vinculando a adotantes acima, e registra
+-- o histórico correspondente em `adocoes` (senão fica um status "adotado"
+-- sem nenhuma adoção no histórico, uma inconsistência de dados)
 UPDATE animais SET status = 'adotado', adotante_id = (SELECT id FROM adotantes WHERE cpf = '66935492335')
   WHERE nome = 'Rex';
+INSERT INTO adocoes (animal_id, adotante_id)
+  VALUES ((SELECT id FROM animais WHERE nome = 'Rex'), (SELECT id FROM adotantes WHERE cpf = '66935492335'));
+
 UPDATE animais SET status = 'adotado', adotante_id = (SELECT id FROM adotantes WHERE cpf = '70009878394')
   WHERE nome = 'Mel';
+INSERT INTO adocoes (animal_id, adotante_id)
+  VALUES ((SELECT id FROM animais WHERE nome = 'Mel'), (SELECT id FROM adotantes WHERE cpf = '70009878394'));
+
 UPDATE animais SET status = 'adotado', adotante_id = (SELECT id FROM adotantes WHERE cpf = '47151558422')
   WHERE nome = 'Tuca';
+INSERT INTO adocoes (animal_id, adotante_id)
+  VALUES ((SELECT id FROM animais WHERE nome = 'Tuca'), (SELECT id FROM adotantes WHERE cpf = '47151558422'));
