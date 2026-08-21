@@ -3,7 +3,7 @@
 CRUD simples para prática de QA (testes de API, UI e banco de dados).
 
 - **Backend**: Node.js + Express (API REST) — SQL puro via `mysql2`, rodando com Bun
-- **Frontend**: React + Vite
+- **Frontend**: Next.js (App Router) + TypeScript — rotas reais por página, tudo client-side (sem Server Components de data-fetching)
 - **Banco**: MariaDB em container Docker
 - **Testes**: Playwright (E2E), rodando automaticamente via GitHub Actions a cada push/PR
 

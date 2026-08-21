@@ -1,5 +1,7 @@
 **/node_modules
+**/.next
 .git
 .env
 db
 *.md
+frontend-vite-legacy

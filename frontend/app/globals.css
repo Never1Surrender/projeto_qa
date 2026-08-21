@@ -1,0 +1,336 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Nunito', system-ui, sans-serif;
+
+  --color-bg: #f5f6fb;
+  --color-primary: #6366f1;
+  --color-primary-dark: #4338ca;
+  --color-primary-light: #e0e7ff;
+  --color-secondary: #10b981;
+  --color-secondary-dark: #047857;
+  --color-secondary-light: #d1fae5;
+  --color-danger: #ef4444;
+  --color-danger-dark: #b91c1c;
+  --color-danger-light: #fee2e2;
+  --color-ink: #1e2233;
+  --color-ink-muted: #6b7280;
+  --color-line: #e2e4f0;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+
+  --shadow-sm: 0 1px 3px rgba(30, 34, 51, 0.06);
+  --shadow-md: 0 8px 24px rgba(30, 34, 51, 0.1);
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans m-0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-extrabold;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-4xl mx-auto p-6;
+  }
+
+  .toolbar {
+    @apply flex items-center justify-center gap-3 flex-wrap bg-white rounded-lg shadow-sm px-5 py-3 mb-7;
+  }
+
+  .toolbar-links {
+    @apply flex gap-1 flex-wrap;
+  }
+
+  .toolbar-links button {
+    @apply border-none bg-transparent font-bold text-ink-muted rounded-full px-4 py-2;
+  }
+
+  .toolbar-links button:hover {
+    @apply bg-primary-light text-primary-dark border-transparent;
+  }
+
+  .toolbar-links button.ativo {
+    @apply bg-primary text-white;
+  }
+
+  .toolbar-links button.ativo:hover {
+    @apply bg-primary-dark text-white;
+  }
+
+  .page-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .page-header h2 {
+    @apply m-0 text-2xl text-ink;
+  }
+
+  .filtros {
+    @apply flex flex-wrap gap-5 bg-white border border-line px-5 py-3.5 rounded-md mb-4 shadow-sm;
+  }
+
+  .filtros label {
+    @apply flex flex-col gap-1 text-xs font-bold text-ink-muted uppercase tracking-wide;
+  }
+
+  .filtros select,
+  .filtros input {
+    @apply rounded-sm border-[1.5px] border-line px-2.5 py-1.5 text-sm font-semibold bg-white text-ink normal-case tracking-normal;
+  }
+
+  .chips-filtro {
+    @apply flex flex-wrap items-center gap-2 mb-4;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 bg-primary-light text-primary-dark text-xs font-bold px-3 py-1.5 rounded-full;
+  }
+
+  .chip button {
+    @apply p-0 w-4 h-4 min-w-0 border-none bg-transparent text-primary-dark font-extrabold leading-none flex items-center justify-center;
+  }
+
+  .chip-limpar {
+    @apply text-xs font-bold text-ink-muted underline underline-offset-2 hover:text-primary-dark bg-transparent border-none px-1 py-0;
+  }
+
+  .paginacao {
+    @apply flex items-center justify-between flex-wrap gap-3 mt-5 bg-white border border-line px-5 py-3.5 rounded-md shadow-sm;
+  }
+
+  .paginacao-info {
+    @apply text-sm font-semibold text-ink-muted;
+  }
+
+  .paginacao-botoes {
+    @apply flex gap-2;
+  }
+
+  .empty-state {
+    @apply text-center py-12 px-6 text-ink-muted bg-white border-2 border-dashed border-line rounded-lg font-semibold;
+  }
+
+  .empty-emoji {
+    @apply block text-4xl mb-2;
+  }
+
+  .tabela-wrap {
+    @apply w-full overflow-x-auto rounded-lg shadow-sm border border-line;
+  }
+
+  .tabela-animais {
+    @apply w-full border-collapse bg-white;
+  }
+
+  .tabela-adotantes {
+    @apply table-fixed;
+  }
+
+  .tabela-adotantes th {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .tabela-animais th,
+  .tabela-animais td {
+    @apply text-left px-4 py-3 border-b border-line text-xs;
+  }
+
+  .tabela-animais th {
+    @apply bg-bg text-xs uppercase tracking-wide text-ink-muted font-extrabold;
+  }
+
+  .tabela-animais tbody tr {
+    @apply transition-colors;
+  }
+
+  .tabela-animais tbody tr:hover {
+    @apply bg-primary-light;
+  }
+
+  .tabela-animais tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold;
+  }
+
+  .badge-disponivel {
+    @apply bg-secondary-light text-secondary-dark;
+  }
+
+  .badge-adotado {
+    @apply bg-primary-light text-primary-dark;
+  }
+
+  .acoes {
+    @apply flex items-center justify-center gap-1.5;
+  }
+
+  .tabela-animais th.centro,
+  .tabela-animais td.centro {
+    @apply text-center;
+  }
+
+  .form-card {
+    @apply bg-white p-6 rounded-lg max-w-md mx-auto flex flex-col gap-3.5 shadow-md border border-line;
+  }
+
+  .form-card h2 {
+    @apply m-0 mb-1 text-xl text-ink;
+  }
+
+  .form-card label {
+    @apply flex flex-col gap-1.5 text-xs font-bold text-ink-muted uppercase tracking-wide;
+  }
+
+  .form-card input,
+  .form-card select {
+    @apply px-3 py-2.5 border-[1.5px] border-line rounded-sm text-base font-semibold normal-case tracking-normal bg-white text-ink transition-colors;
+  }
+
+  .form-card input:disabled,
+  .form-card select:disabled {
+    @apply opacity-55 cursor-not-allowed;
+  }
+
+  .campo-foto {
+    @apply flex items-center gap-3 normal-case;
+  }
+
+  .campo-foto-preview {
+    @apply w-16 h-16 shrink-0 rounded-md overflow-hidden border border-line;
+  }
+
+  .campo-foto-preview img {
+    @apply w-full h-full object-cover;
+  }
+
+  .campo-foto-acoes {
+    @apply flex gap-2;
+  }
+
+  .campo-foto-acoes button {
+    @apply text-sm normal-case tracking-normal font-bold;
+  }
+
+  .form-card input:focus,
+  .form-card select:focus,
+  .filtros select:focus,
+  .filtros input:focus {
+    @apply outline-none border-primary ring-4 ring-primary-light;
+  }
+
+  .form-actions {
+    @apply flex gap-2.5 mt-1;
+  }
+
+  button {
+    @apply cursor-pointer px-5 py-2.5 rounded-sm border-[1.5px] border-line bg-white text-ink font-bold text-sm transition-all;
+  }
+
+  button:hover {
+    @apply border-primary text-primary-dark;
+  }
+
+  button:active {
+    @apply scale-[0.97];
+  }
+
+  button:focus-visible {
+    @apply outline outline-2 outline-primary outline-offset-2;
+  }
+
+  .btn-primario {
+    @apply bg-primary border-primary text-white;
+  }
+
+  .btn-primario:hover {
+    @apply bg-primary-dark border-primary-dark text-white;
+  }
+
+  .btn-secundario {
+    @apply bg-secondary border-secondary text-white;
+  }
+
+  .btn-secundario:hover {
+    @apply bg-secondary-dark border-secondary-dark text-white;
+  }
+
+  .btn-perigo {
+    @apply bg-danger-light border-transparent text-danger-dark;
+  }
+
+  .btn-perigo:hover {
+    @apply bg-danger border-danger text-white;
+  }
+
+  .btn-icone {
+    @apply inline-flex items-center justify-center w-[34px] h-[34px] p-0 rounded-full;
+  }
+
+  .btn-icone.btn-perigo {
+    @apply bg-danger border-danger text-white;
+  }
+
+  .btn-icone.btn-perigo:hover {
+    @apply bg-danger-dark border-danger-dark;
+  }
+
+  .btn-voltar {
+    @apply bg-transparent border-none px-0 text-ink-muted font-bold text-sm mb-4;
+  }
+
+  .btn-voltar:hover {
+    @apply text-primary-dark;
+  }
+
+  .detalhe-animal-card {
+    @apply bg-white rounded-lg shadow-md border border-line p-6 flex flex-col sm:flex-row gap-6;
+  }
+
+  .detalhe-animal-foto {
+    @apply w-full sm:w-48 h-48 shrink-0 rounded-lg bg-gradient-to-br from-primary-light to-secondary-light flex items-center justify-center overflow-hidden;
+  }
+
+  .detalhe-animal-foto img {
+    @apply w-full h-full object-cover;
+  }
+
+  .detalhe-animal-emoji {
+    @apply text-6xl;
+  }
+
+  .detalhe-animal-info {
+    @apply flex-1 flex flex-col gap-4 min-w-0;
+  }
+
+  .detalhe-lista {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3;
+  }
+
+  .detalhe-lista dt {
+    @apply text-xs font-bold text-ink-muted uppercase tracking-wide;
+  }
+
+  .detalhe-lista dd {
+    @apply m-0 text-base font-semibold text-ink;
+  }
+
+  .card-foto {
+    @apply w-12 h-12 shrink-0 rounded-full overflow-hidden;
+  }
+
+  .card-foto img {
+    @apply w-full h-full object-cover;
+  }
+}

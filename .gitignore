@@ -3,6 +3,7 @@ node_modules/
 dist/
 *.log
 backend/uploads/
+frontend/.next/
 
 # Playwright
 /test-results/
