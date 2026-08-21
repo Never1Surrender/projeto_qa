@@ -70,6 +70,7 @@ export interface FiltrosAnimais {
 
 export interface FiltrosAdotantes {
   busca?: string;
+  cidade_id?: string | number;
   ordenar?: string;
   direcao?: string;
   page?: number;

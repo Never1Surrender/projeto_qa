@@ -82,9 +82,6 @@ export default function PaginaAnimais() {
     <>
       <div className="page-header">
         <h2>Animais</h2>
-        <button className="btn-primario" onClick={() => router.push('/animais/novo')}>
-          + Novo animal
-        </button>
       </div>
       <ListaAnimais
         animais={animais}
@@ -110,6 +107,7 @@ export default function PaginaAnimais() {
         onExcluir={excluirAnimal}
         onAdotar={(animal) => router.push(`/animais/${animal.id}/adotar`)}
         onVerDetalhe={(animal) => router.push(`/animais/${animal.id}`)}
+        onNovoAnimal={() => router.push('/animais/novo')}
       />
     </>
   );

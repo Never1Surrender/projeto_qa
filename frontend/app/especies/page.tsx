@@ -13,6 +13,7 @@ export default function PaginaEspecies() {
   const notificar = useNotificacao();
   const confirmar = useConfirm();
   const [especies, setEspecies] = useState<Especie[]>([]);
+  const [busca, setBusca] = useState('');
 
   async function carregar() {
     try {
@@ -39,6 +40,8 @@ export default function PaginaEspecies() {
     }
   }
 
+  const especiesFiltradas = especies.filter((e) => e.nome.toLowerCase().includes(busca.toLowerCase()));
+
   return (
     <div>
       <div className="page-header">
@@ -48,6 +51,18 @@ export default function PaginaEspecies() {
         </button>
       </div>
 
+      <div className="filtros">
+        <label>
+          Buscar por nome:
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Digite o nome da espécie..."
+          />
+        </label>
+      </div>
+
       {especies.length === 0 && (
         <div className="empty-state">
           <span className="empty-emoji">🏷️</span>
@@ -55,7 +70,14 @@ export default function PaginaEspecies() {
         </div>
       )}
 
-      {especies.length > 0 && (
+      {especies.length > 0 && especiesFiltradas.length === 0 && (
+        <div className="empty-state">
+          <span className="empty-emoji">🏷️</span>
+          Nenhuma espécie encontrada para &quot;{busca}&quot;.
+        </div>
+      )}
+
+      {especiesFiltradas.length > 0 && (
         <div className="tabela-wrap">
           <table className="tabela-animais">
             <colgroup>
@@ -69,7 +91,7 @@ export default function PaginaEspecies() {
               </tr>
             </thead>
             <tbody>
-              {especies.map((e) => (
+              {especiesFiltradas.map((e) => (
                 <tr key={e.id}>
                   <td>{e.nome}</td>
                   <td className="acoes">

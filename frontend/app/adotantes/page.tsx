@@ -3,29 +3,41 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { IconeEditar, IconeExcluir } from '@/components/icones';
+import { IconeEditar, IconeExcluir, IconeFiltro } from '@/components/icones';
+import Combobox from '@/components/combobox';
 import { formatarCPF, formatarTelefone } from '@/lib/utils';
+import { ESTADOS_BR } from '@/lib/constants';
 import { useNotificacao } from '@/components/notificacoes';
 import { useConfirm } from '@/components/confirm-dialog';
 import Paginacao from '@/components/paginacao';
-import type { Adotante } from '@/types';
+import type { Adotante, Cidade } from '@/types';
 
 export default function PaginaAdotantes() {
   const router = useRouter();
   const notificar = useNotificacao();
   const confirmar = useConfirm();
   const [adotantes, setAdotantes] = useState<Adotante[]>([]);
+  const [cidades, setCidades] = useState<Cidade[]>([]);
   const [busca, setBusca] = useState('');
   const [buscaDebounced, setBuscaDebounced] = useState('');
+  const [filtroCidade, setFiltroCidade] = useState('');
+  const [estado, setEstado] = useState('');
   const [ordenar, setOrdenar] = useState('criado_em');
   const [direcao, setDirecao] = useState('desc');
   const [pagina, setPagina] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
+  const [sheetAberto, setSheetAberto] = useState(false);
 
   async function carregar() {
     try {
-      const resultado = await api.listarAdotantes({ busca: buscaDebounced, ordenar, direcao, page: pagina });
+      const resultado = await api.listarAdotantes({
+        busca: buscaDebounced,
+        cidade_id: filtroCidade,
+        ordenar,
+        direcao,
+        page: pagina,
+      });
       setAdotantes(resultado.dados);
       setTotal(resultado.total);
       setTotalPaginas(resultado.totalPaginas);
@@ -41,12 +53,22 @@ export default function PaginaAdotantes() {
 
   useEffect(() => {
     setPagina(1);
-  }, [buscaDebounced, ordenar, direcao]);
+  }, [buscaDebounced, filtroCidade, ordenar, direcao]);
 
   useEffect(() => {
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buscaDebounced, ordenar, direcao, pagina]);
+  }, [buscaDebounced, filtroCidade, ordenar, direcao, pagina]);
+
+  useEffect(() => {
+    api.listarCidades().then(setCidades).catch((e) => notificar('erro', (e as Error).message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleEstadoChange(novoEstado: string | number) {
+    setEstado(String(novoEstado));
+    setFiltroCidade('');
+  }
 
   async function handleExcluir(adotante: Adotante) {
     const ok = await confirmar(`Excluir ${adotante.nome}?`, { textoConfirmar: 'Excluir', perigo: true });
@@ -60,16 +82,28 @@ export default function PaginaAdotantes() {
     }
   }
 
+  function limparFiltros() {
+    setBusca('');
+    setFiltroCidade('');
+    setEstado('');
+  }
+
+  const cidadeSelecionada = cidades.find((c) => String(c.id) === String(filtroCidade));
+  const filtrosAtivos = [
+    filtroCidade && {
+      chave: 'cidade',
+      rotulo: cidadeSelecionada ? `${cidadeSelecionada.nome}/${cidadeSelecionada.estado}` : '',
+      limpar: () => setFiltroCidade(''),
+    },
+  ].filter(Boolean) as { chave: string; rotulo: string; limpar: () => void }[];
+
   return (
     <div>
       <div className="page-header">
         <h2>Adotantes</h2>
-        <button className="btn-primario" onClick={() => router.push('/adotantes/novo')}>
-          + Novo adotante
-        </button>
       </div>
 
-      <div className="filtros">
+      <div className="filtros mb-4">
         <label>
           Buscar por nome:
           <input
@@ -93,7 +127,98 @@ export default function PaginaAdotantes() {
             <option value="desc">Decrescente</option>
           </select>
         </label>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <button type="button" className="relative" onClick={() => setSheetAberto(true)}>
+            <span className="inline-flex items-center gap-1.5">
+              <IconeFiltro />
+              Filtros
+            </span>
+            {filtrosAtivos.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[11px] font-extrabold align-middle">
+                {filtrosAtivos.length}
+              </span>
+            )}
+          </button>
+
+          <button type="button" className="btn-primario" onClick={() => router.push('/adotantes/novo')}>
+            + Novo adotante
+          </button>
+        </div>
       </div>
+
+      {sheetAberto && (
+        <>
+          <div className="fixed inset-0 z-40 bg-ink/40" onClick={() => setSheetAberto(false)} />
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-md p-6 flex flex-col gap-4 overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="m-0 text-xl text-ink">Filtros</h2>
+              <button
+                type="button"
+                className="p-0 w-8 h-8 border-none bg-transparent text-ink-muted font-extrabold"
+                onClick={() => setSheetAberto(false)}
+                aria-label="Fechar filtros"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="filtros flex-col items-stretch border-none shadow-none p-0 mb-0 gap-4">
+              <label>
+                Filtrar por estado (UF):
+                <Combobox
+                  options={[
+                    { value: '', label: 'Todos' },
+                    ...ESTADOS_BR.map((uf) => ({ value: uf.sigla, label: uf.sigla })),
+                  ]}
+                  value={estado}
+                  onChange={handleEstadoChange}
+                  placeholder="Digite ou selecione..."
+                />
+              </label>
+
+              <label>
+                Filtrar por cidade:
+                <Combobox
+                  options={[
+                    { value: '', label: 'Todas' },
+                    ...cidades.filter((c) => !estado || c.estado === estado).map((c) => ({ value: c.id, label: c.nome })),
+                  ]}
+                  value={filtroCidade}
+                  onChange={(v) => setFiltroCidade(String(v))}
+                  placeholder={estado ? 'Digite ou selecione...' : 'Selecione um estado primeiro'}
+                  disabled={!estado}
+                />
+              </label>
+            </div>
+
+            <div className="form-actions mt-2">
+              <button type="button" className="btn-primario" onClick={() => setSheetAberto(false)}>
+                Aplicar
+              </button>
+              <button type="button" onClick={limparFiltros}>
+                Limpar filtros
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {filtrosAtivos.length > 0 && (
+        <div className="chips-filtro">
+          {filtrosAtivos.map((filtro) => (
+            <span className="chip" key={filtro.chave}>
+              {filtro.rotulo}
+              <button type="button" aria-label={`Remover filtro ${filtro.rotulo}`} onClick={filtro.limpar}>
+                ×
+              </button>
+            </span>
+          ))}
+          <button type="button" className="chip-limpar" onClick={limparFiltros}>
+            Limpar todos
+          </button>
+        </div>
+      )}
 
       {adotantes.length === 0 && (
         <div className="empty-state">

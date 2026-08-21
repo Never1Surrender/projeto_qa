@@ -21,7 +21,9 @@ interface ComboboxProps {
 export default function Combobox({ options, value, onChange, placeholder, disabled, required, name }: ComboboxProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
-  const selecionado = options.find((o) => String(o.value) === String(value));
+  // value === '' representa "nenhuma seleção" (placeholder), então não deve casar com uma
+  // opção real que por acaso também use value: '' (ex: a opção "Todas"/"Todos" de um filtro)
+  const selecionado = value === '' ? undefined : options.find((o) => String(o.value) === String(value));
   const [texto, setTexto] = useState(selecionado?.label ?? '');
   const [aberto, setAberto] = useState(false);
   const [indiceAtivo, setIndiceAtivo] = useState(-1);

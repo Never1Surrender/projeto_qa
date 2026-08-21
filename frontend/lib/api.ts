@@ -69,6 +69,7 @@ export const api = {
   listarAdotantes: (filtros: FiltrosAdotantes = {}) => {
     const params = new URLSearchParams();
     if (filtros.busca) params.set('busca', filtros.busca);
+    if (filtros.cidade_id) params.set('cidade_id', String(filtros.cidade_id));
     if (filtros.ordenar) params.set('ordenar', filtros.ordenar);
     if (filtros.direcao) params.set('direcao', filtros.direcao);
     if (filtros.page) params.set('page', String(filtros.page));

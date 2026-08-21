@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Combobox from './combobox';
 import Paginacao from './paginacao';
-import { IconeEditar, IconeExcluir } from './icones';
+import { IconeEditar, IconeExcluir, IconeFiltro } from './icones';
+import { ESTADOS_BR } from '@/lib/constants';
 import type { Animal, Cidade, Especie } from '@/types';
 
 const STATUS_INFO: Record<string, { rotulo: string; icone: string }> = {
@@ -47,6 +49,7 @@ interface ListaAnimaisProps {
   onExcluir: (animal: Animal) => void;
   onAdotar: (animal: Animal) => void;
   onVerDetalhe: (animal: Animal) => void;
+  onNovoAnimal: () => void;
 }
 
 export default function ListaAnimais({
@@ -73,7 +76,17 @@ export default function ListaAnimais({
   onExcluir,
   onAdotar,
   onVerDetalhe,
+  onNovoAnimal,
 }: ListaAnimaisProps) {
+  const [sheetAberto, setSheetAberto] = useState(false);
+  const cidadeAtual = cidades.find((c) => String(c.id) === String(filtroCidade));
+  const [estado, setEstado] = useState(cidadeAtual?.estado ?? '');
+
+  function handleEstadoChange(novoEstado: string | number) {
+    setEstado(String(novoEstado));
+    onFiltroCidadeChange('');
+  }
+
   const especieSelecionada = especies.find((esp) => String(esp.id) === String(filtroEspecie));
   const cidadeSelecionada = cidades.find((c) => String(c.id) === String(filtroCidade));
 
@@ -93,11 +106,12 @@ export default function ListaAnimais({
     onFiltroEspecieChange('');
     onFiltroCidadeChange('');
     onBuscaChange('');
+    setEstado('');
   }
 
   return (
     <div>
-      <div className="filtros">
+      <div className="filtros mb-4">
         <label>
           Buscar por nome:
           <input
@@ -105,38 +119,6 @@ export default function ListaAnimais({
             value={busca}
             onChange={(e) => onBuscaChange(e.target.value)}
             placeholder="Digite o nome do animal..."
-          />
-        </label>
-
-        <label>
-          Filtrar por status:
-          <select value={filtroStatus} onChange={(e) => onFiltroStatusChange(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="disponivel">Disponível</option>
-            <option value="adotado">Adotado</option>
-          </select>
-        </label>
-
-        <label>
-          Filtrar por espécie:
-          <Combobox
-            options={[{ value: '', label: 'Todas' }, ...especies.map((esp) => ({ value: esp.id, label: esp.nome }))]}
-            value={filtroEspecie}
-            onChange={onFiltroEspecieChange}
-            placeholder="Digite ou selecione..."
-          />
-        </label>
-
-        <label>
-          Filtrar por cidade:
-          <Combobox
-            options={[
-              { value: '', label: 'Todas' },
-              ...cidades.map((c) => ({ value: c.id, label: `${c.nome}/${c.estado}` })),
-            ]}
-            value={filtroCidade}
-            onChange={onFiltroCidadeChange}
-            placeholder="Digite ou selecione..."
           />
         </label>
 
@@ -158,7 +140,101 @@ export default function ListaAnimais({
             <option value="desc">Decrescente</option>
           </select>
         </label>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <button type="button" className="relative" onClick={() => setSheetAberto(true)}>
+            <span className="inline-flex items-center gap-1.5">
+              <IconeFiltro />
+              Filtros
+            </span>
+            {filtrosAtivos.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[11px] font-extrabold align-middle">
+                {filtrosAtivos.length}
+              </span>
+            )}
+          </button>
+
+          <button type="button" className="btn-primario" onClick={onNovoAnimal}>
+            + Novo animal
+          </button>
+        </div>
       </div>
+
+      {sheetAberto && (
+        <>
+          <div className="fixed inset-0 z-40 bg-ink/40" onClick={() => setSheetAberto(false)} />
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-md p-6 flex flex-col gap-4 overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="m-0 text-xl text-ink">Filtros</h2>
+              <button
+                type="button"
+                className="p-0 w-8 h-8 border-none bg-transparent text-ink-muted font-extrabold"
+                onClick={() => setSheetAberto(false)}
+                aria-label="Fechar filtros"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="filtros flex-col items-stretch border-none shadow-none p-0 mb-0 gap-4">
+            <label>
+              Filtrar por status:
+              <select value={filtroStatus} onChange={(e) => onFiltroStatusChange(e.target.value)}>
+                <option value="">Todos</option>
+                <option value="disponivel">Disponível</option>
+                <option value="adotado">Adotado</option>
+              </select>
+            </label>
+
+            <label>
+              Filtrar por espécie:
+              <Combobox
+                options={[{ value: '', label: 'Todas' }, ...especies.map((esp) => ({ value: esp.id, label: esp.nome }))]}
+                value={filtroEspecie}
+                onChange={onFiltroEspecieChange}
+                placeholder="Digite ou selecione..."
+              />
+            </label>
+
+            <label>
+              Filtrar por estado (UF):
+              <Combobox
+                options={[
+                  { value: '', label: 'Todos' },
+                  ...ESTADOS_BR.map((uf) => ({ value: uf.sigla, label: uf.sigla })),
+                ]}
+                value={estado}
+                onChange={handleEstadoChange}
+                placeholder="Digite ou selecione..."
+              />
+            </label>
+
+            <label>
+              Filtrar por cidade:
+              <Combobox
+                options={[
+                  { value: '', label: 'Todas' },
+                  ...cidades.filter((c) => !estado || c.estado === estado).map((c) => ({ value: c.id, label: c.nome })),
+                ]}
+                value={filtroCidade}
+                onChange={onFiltroCidadeChange}
+                placeholder={estado ? 'Digite ou selecione...' : 'Selecione um estado primeiro'}
+                disabled={!estado}
+              />
+            </label>
+            </div>
+
+            <div className="form-actions mt-2">
+              <button type="button" className="btn-primario" onClick={() => setSheetAberto(false)}>
+                Aplicar
+              </button>
+              <button type="button" onClick={limparTudo}>
+                Limpar filtros
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {filtrosAtivos.length > 0 && (
         <div className="chips-filtro">

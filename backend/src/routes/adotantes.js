@@ -23,10 +23,10 @@ async function cidadeExiste(cidade_id) {
   return rows.length > 0;
 }
 
-// GET /adotantes - lista com busca (?busca=), ordenação (?ordenar=nome|criado_em, ?direcao=asc|desc)
-// e paginação (?page=, ?limit=)
+// GET /adotantes - lista com busca (?busca=), filtro por cidade (?cidade_id=),
+// ordenação (?ordenar=nome|criado_em, ?direcao=asc|desc) e paginação (?page=, ?limit=)
 router.get('/', asyncHandler(async (req, res) => {
-  const { busca, ordenar, direcao, page, limit } = req.query;
+  const { busca, cidade_id, ordenar, direcao, page, limit } = req.query;
   if (ordenar && !ORDENACOES_VALIDAS[ordenar]) {
     return res.status(400).json({ erro: `ordenar inválido, use: ${Object.keys(ORDENACOES_VALIDAS).join(', ')}` });
   }
@@ -39,6 +39,10 @@ router.get('/', asyncHandler(async (req, res) => {
   if (busca) {
     condicoes.push('ad.nome LIKE ?');
     params.push(`%${busca}%`);
+  }
+  if (cidade_id) {
+    condicoes.push('ad.cidade_id = ?');
+    params.push(cidade_id);
   }
   const where = condicoes.length ? ` WHERE ${condicoes.join(' AND ')}` : '';
 

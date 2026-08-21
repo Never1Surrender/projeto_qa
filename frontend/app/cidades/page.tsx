@@ -13,6 +13,7 @@ export default function PaginaCidades() {
   const notificar = useNotificacao();
   const confirmar = useConfirm();
   const [cidades, setCidades] = useState<Cidade[]>([]);
+  const [busca, setBusca] = useState('');
 
   async function carregar() {
     try {
@@ -42,6 +43,10 @@ export default function PaginaCidades() {
     }
   }
 
+  const cidadesFiltradas = cidades.filter((c) =>
+    `${c.nome} ${c.estado}`.toLowerCase().includes(busca.toLowerCase())
+  );
+
   return (
     <div>
       <div className="page-header">
@@ -51,6 +56,18 @@ export default function PaginaCidades() {
         </button>
       </div>
 
+      <div className="filtros">
+        <label>
+          Buscar por nome ou estado:
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Digite o nome da cidade ou UF..."
+          />
+        </label>
+      </div>
+
       {cidades.length === 0 && (
         <div className="empty-state">
           <span className="empty-emoji">📍</span>
@@ -58,7 +75,14 @@ export default function PaginaCidades() {
         </div>
       )}
 
-      {cidades.length > 0 && (
+      {cidades.length > 0 && cidadesFiltradas.length === 0 && (
+        <div className="empty-state">
+          <span className="empty-emoji">📍</span>
+          Nenhuma cidade encontrada para &quot;{busca}&quot;.
+        </div>
+      )}
+
+      {cidadesFiltradas.length > 0 && (
         <div className="tabela-wrap">
           <table className="tabela-animais">
             <colgroup>
@@ -74,7 +98,7 @@ export default function PaginaCidades() {
               </tr>
             </thead>
             <tbody>
-              {cidades.map((c) => (
+              {cidadesFiltradas.map((c) => (
                 <tr key={c.id}>
                   <td>{c.nome}</td>
                   <td className="centro">{c.estado}</td>
