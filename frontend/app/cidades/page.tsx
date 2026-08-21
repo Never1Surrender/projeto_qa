@@ -51,9 +51,6 @@ export default function PaginaCidades() {
     <div>
       <div className="page-header">
         <h2>Cidades</h2>
-        <button className="btn-primario" onClick={() => router.push('/cidades/novo')}>
-          + Nova cidade
-        </button>
       </div>
 
       <div className="filtros">
@@ -66,6 +63,10 @@ export default function PaginaCidades() {
             placeholder="Digite o nome da cidade ou UF..."
           />
         </label>
+
+        <button type="button" className="btn-primario ml-auto" onClick={() => router.push('/cidades/novo')}>
+          + Nova cidade
+        </button>
       </div>
 
       {cidades.length === 0 && (

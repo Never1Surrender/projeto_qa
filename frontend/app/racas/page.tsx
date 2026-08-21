@@ -55,9 +55,6 @@ export default function PaginaRacas() {
     <div>
       <div className="page-header">
         <h2>Raças</h2>
-        <button className="btn-primario" onClick={() => router.push('/racas/novo')}>
-          + Nova raça
-        </button>
       </div>
 
       <div className="filtros">
@@ -79,6 +76,10 @@ export default function PaginaRacas() {
             placeholder="Digite ou selecione..."
           />
         </label>
+
+        <button type="button" className="btn-primario ml-auto" onClick={() => router.push('/racas/novo')}>
+          + Nova raça
+        </button>
       </div>
 
       {racas.length === 0 && (

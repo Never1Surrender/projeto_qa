@@ -46,9 +46,6 @@ export default function PaginaEspecies() {
     <div>
       <div className="page-header">
         <h2>Espécies</h2>
-        <button className="btn-primario" onClick={() => router.push('/especies/novo')}>
-          + Nova espécie
-        </button>
       </div>
 
       <div className="filtros">
@@ -61,6 +58,10 @@ export default function PaginaEspecies() {
             placeholder="Digite o nome da espécie..."
           />
         </label>
+
+        <button type="button" className="btn-primario ml-auto" onClick={() => router.push('/especies/novo')}>
+          + Nova espécie
+        </button>
       </div>
 
       {especies.length === 0 && (
