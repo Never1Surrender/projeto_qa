@@ -12,7 +12,13 @@ test('Acessar /cidades/novo direto pela URL abre o formulário', async ({ page }
 });
 
 //Cenário 2 - a URL muda ao navegar para o detalhe de um animal, e "Voltar" restaura a lista
-test('Ver detalhes de um animal muda a URL para /animais/:id', async ({ page }) => {
+test('Ver detalhes de um animal muda a URL para /animais/:id', async ({ page, request }) => {
+  // cria o próprio animal antes, pra não depender de dado já existir no banco
+  // (num ambiente limpo, tipo o CI, a lista pode começar vazia)
+  await request.post('http://localhost:3001/animais', {
+    data: { nome: `NavTest ${Date.now()}`, especie_id: 1 },
+  });
+
   await page.goto('http://localhost:5173/animais');
 
   const primeiroCard = page.locator('button[aria-label^="Ver detalhes de"]').first();
@@ -27,7 +33,11 @@ test('Ver detalhes de um animal muda a URL para /animais/:id', async ({ page }) 
 });
 
 //Cenário 3 - o botão "voltar" do próprio navegador funciona, porque agora existe histórico de URL de verdade
-test('Botão voltar do navegador retorna da tela de detalhe para a lista', async ({ page }) => {
+test('Botão voltar do navegador retorna da tela de detalhe para a lista', async ({ page, request }) => {
+  await request.post('http://localhost:3001/animais', {
+    data: { nome: `NavTest ${Date.now()}`, especie_id: 1 },
+  });
+
   await page.goto('http://localhost:5173/animais');
 
   const primeiroCard = page.locator('button[aria-label^="Ver detalhes de"]').first();
